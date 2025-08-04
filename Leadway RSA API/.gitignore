@@ -1,0 +1,74 @@
+# This is a standard .gitignore file for a Visual Studio solution
+# containing .NET Core projects.
+
+#-------------------------------------------------------------------
+# Project and Solution-specific files that should be ignored
+#-------------------------------------------------------------------
+# Visual Studio solution user options file
+*.suo
+
+# Visual Studio temporary files
+*.tmp
+
+# Visual Studio user-specific files and folders
+# This folder stores user settings and can cause merge conflicts.
+.vs/
+.vspscc
+.vssscc
+
+# Visual Studio code coverage results
+*.coverage
+*.vsix
+*.vsixmanifest
+
+# Visual Studio Test files
+TestResults/
+*.trx
+
+#-------------------------------------------------------------------
+# Build and Compilation Artifacts
+#-------------------------------------------------------------------
+# Build output folders
+[Bb]in/
+[Oo]bj/
+
+# NuGet package restore folders and files
+# These should always be restored, not committed.
+packages/
+*.nupkg
+.nuget/
+
+# ASP.NET Core and Entity Framework Core tools files
+# These are generated and should not be committed.
+*.pdb
+*.intellisense.xml
+*.refresh
+*.build.csdef
+*.cscfg
+
+#-------------------------------------------------------------------
+# Generated and Temporary files
+#-------------------------------------------------------------------
+# Visual Studio temporary files for debugging
+*.log
+*.bak
+*.cache
+*.sdf
+
+# Resharper generated files
+# This is a popular extension, its files should not be committed.
+_ReSharper.*/
+*.DotSettings.user
+
+# Git-specific files
+# This is typically hidden on most operating systems.
+.gitattributes
+
+# ASP.NET Core temporary and cache files
+# These should not be committed to the repository.
+temp/
+wwwroot/css/site.css.map
+wwwroot/js/site.js.map
+
+# The "publish" folder, which is where the app is compiled for deployment.
+[Pp]ublish/
