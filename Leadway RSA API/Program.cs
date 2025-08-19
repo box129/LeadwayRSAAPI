@@ -1,4 +1,5 @@
 using Leadway_RSA_API.Data;
+using Leadway_RSA_API.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization; // <--- MAKE SURE THIS IS PRESENT
 
@@ -17,6 +18,16 @@ builder.Services.AddControllers()
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// --- Add your new services here ---
+builder.Services.AddScoped<IApplicantService, ApplicantService>();
+builder.Services.AddScoped<IIdentificationService, IdentificationService>();
+builder.Services.AddScoped<IBeneficiaryService, BeneficiaryService>();
+builder.Services.AddScoped<IAssetService, AssetService>();
+builder.Services.AddScoped<IAssetAllocationService, AssetAllocationService>();
+builder.Services.AddScoped<IExecutorService, ExecutorService>();
+builder.Services.AddScoped<IGuardianService, GuardianService>();
+// ------------------------------------
 
 // Configure the DbContext with SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

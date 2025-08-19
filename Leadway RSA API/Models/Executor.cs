@@ -1,9 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Leadway_RSA_API.CustomValidators;
+using System.ComponentModel.DataAnnotations;
 
 namespace Leadway_RSA_API.Models
 {
     public class Executor
     {
+        // Apply the custom validation attribute at the class level
+        [ExecutorTypeValidation]
         public int Id { get; set; } // primary key
 
         [Required]
