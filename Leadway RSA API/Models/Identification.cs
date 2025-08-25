@@ -6,9 +6,10 @@ namespace Leadway_RSA_API.Models
     {
         public int Id { get; set; } // Primary Key
 
-         // An Identification record must always be linked to an Applicant
+        // An Identification record must always be linked to an Applicant
         public int ApplicantId { get; set; } // Foreign Key
 
+        public string? IdentificationType { get; set; } // Type of identification (e.g., Passort, Driver's License, etc.)
         [Required]
         [StringLength(100)] // Limit length for dcument number
         public string? DocumentNumber { get; set; } // The actual license/document number

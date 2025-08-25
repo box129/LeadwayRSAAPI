@@ -1,5 +1,6 @@
 ﻿using Leadway_RSA_API.Data;
 using Leadway_RSA_API.Models;
+using Leadway_RSA_API.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,10 @@ namespace Leadway_RSA_API.Services
             _context = context;
         }
 
-        public async Task<Asset?> AddAssetAsync(int applicantId, Asset asset)
+        /// <summary>
+        /// Adds a new Asset record for a specific Applicant.
+        /// </summary>
+        public async Task<Asset> AddAssetAsync(int applicantId, CreateAssetDto assetDto)
         {
             // 2. Check if the Applicant exists
             var applicant = await _context.Applicants.FindAsync(applicantId);
@@ -29,12 +33,20 @@ namespace Leadway_RSA_API.Services
                 //return NotFound($"Applicant with ID {applicantId} not found."); // Returns 404
             }
 
-            // 3. Associate Asset with Applicant
-            asset.ApplicantId = applicantId; // Ensure the foreign key is correctly set
-
-            // Important: Clear any nested collections like AssetAllocations
-            // We are only creating the Asset itself in this POST request.
-            // Asset allocations are handled separately.
+            var asset = new Asset()
+            {
+                ApplicantId = applicantId,
+                AssetType = assetDto.AssetType,
+                Name = assetDto.Name,
+                Value = assetDto.Value,
+                RSAPin = assetDto.RSAPin,
+                PFA = assetDto.PFA,
+                BankName = assetDto.BankName,
+                AccountNumber = assetDto.AccountNumber,
+                AccountType = assetDto.AccountType
+            };
+            // It's good practice to clear the navigation property to avoid
+            // any unintended side effects in Entity Framework Core.
             asset.AssetAllocations = new List<BeneficiaryAssetAllocation>();
 
             _context.Assets.Add(asset);
@@ -53,32 +65,18 @@ namespace Leadway_RSA_API.Services
                 .Where(a => a.ApplicantId == applicantId)
                 .ToListAsync();
 
-            // --- ADD THIS BLOCK ---
-            // If lazy loading is enabled, the Applicant property will be populated.
-            // Explicitly set it to null before returning to prevent serialization cycles.
-            foreach (var asset in assets)
-            {
-                asset.Applicant = null;
-            }
-            // --- END OF ADDED BLOCK ---
-
             return assets; // Returns 200 OK with the list of assets
         }
 
-        public async Task<Asset?> GetAssetAsync(int id)
+        public async Task<Asset> GetAssetAsync(int id)
         {
             // Find the asset by its primary Key
             return await _context.Assets.FindAsync(id);
         }
 
-        public async Task<Asset?> UpdateAssetAsync(int applicantId, int id, Asset asset)
+        public async Task<Asset> UpdateAssetAsync(int applicantId, int id, UpdateAssetDto assetDto)
         {
-            if (id != asset.Id || applicantId != asset.ApplicantId)
-            {
-                return null;
-            }
-
-            // 3. Find the existing Assset in the database, if not found return 404
+           // Find the existing Assset in the database, if not found return 404
             var existingAsset = await _context.Assets.FirstOrDefaultAsync(a => a.Id == id && a.ApplicantId == applicantId);
 
             if (existingAsset == null)
@@ -87,8 +85,40 @@ namespace Leadway_RSA_API.Services
                 //return NotFound($"Asset with ID{id} not found or does not belong to Applicant ID {applicantId}.");
             }
 
-            // 4. Update the properties of the existing Asset property
-            _context.Entry(existingAsset).CurrentValues.SetValues(asset);
+            // Apply the updates from the DTO to the existing model.
+            // Only update properties that have a value in the DTO.
+            if (assetDto.AssetType != null)
+            {
+                existingAsset.AssetType = assetDto.AssetType;
+            }
+            if (assetDto.Name != null)
+            {
+                existingAsset.Name = assetDto.Name;
+            }
+            if (assetDto.Value != null)
+            {
+                existingAsset.Value = assetDto.Value;
+            }
+            if (assetDto.RSAPin != null)
+            {
+                existingAsset.RSAPin = assetDto.RSAPin;
+            }
+            if (assetDto.PFA != null)
+            {
+                existingAsset.PFA = assetDto.PFA;
+            }
+            if (assetDto.BankName != null)
+            {
+                existingAsset.BankName = assetDto.BankName;
+            }
+            if (assetDto.AccountNumber != null)
+            {
+                existingAsset.AccountNumber = assetDto.AccountNumber;
+            }
+            if (assetDto.AccountType != null)
+            {
+                existingAsset.AccountType = assetDto.AccountType;
+            }
 
             try
             {

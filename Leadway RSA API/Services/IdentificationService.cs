@@ -1,5 +1,6 @@
 ﻿using Leadway_RSA_API.Data;
 using Leadway_RSA_API.Models;
+using Leadway_RSA_API.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace Leadway_RSA_API.Services
@@ -13,18 +14,29 @@ namespace Leadway_RSA_API.Services
             _context = context;
         }
 
-        public async Task<Identification?> AddIdentificationAsync(int applicantId, Identification identification)
+
+        /// <summary>
+        /// Adds a new Identification record for a specific Applicant.
+        /// The service handles mapping the DTO to the model and all business logic.
+        /// </summary>
+        public async Task<Identification> AddIdentificationAsync(int applicantId, CreateIdentificationDto identificationDto)
         {
-            // 2. Check if the Applicant exists
+            // Check if the Applicant exists
             var applicant = await _context.Applicants.FindAsync(applicantId);
             if (applicant == null)
             {
                 return null; // Signals to the controller that the applicant was not found.
             }
 
-            // 3. Associate Identification with Applicant and set default values
-            identification.ApplicantId = applicantId; // Ensure the FK is correctly set
-            identification.UploadDate = DateTime.UtcNow; // Set upload date on the server
+            // The service is responsible for mapping the DTO to the model.
+            var identification = new Identification
+            {
+                ApplicantId = applicantId,
+                IdentificationType = identificationDto.IdentificationType,
+                DocumentNumber = identificationDto.DocumentNumber,
+                ImagePath = identificationDto.ImagePath,
+                UploadDate = DateTime.UtcNow // Set upload date on the server.
+            };
 
             _context.Identifications.Add(identification);
             await _context.SaveChangesAsync();
@@ -36,39 +48,33 @@ namespace Leadway_RSA_API.Services
             return identification;
         }
 
+        /// <summary>
+        /// Retrieves all Identification records for a specific Applicant.
+        /// </summary>
         public async Task<List<Identification>> GetIdentificationsByApplicantIdAsync(int applicantId)
         {
             var identifications = await _context.Identifications
                 .Where(i => i.ApplicantId == applicantId)
                 .ToListAsync();
 
-
-            // --- ADD THIS BLOCK ---
-            // If lazy loading is enabled, the Applicant property will be populated.
-            // Explicitly set it to null before returning to prevent serialization cycles.
-            // Perform circular reference cleanup in the service before returning the data.
-            foreach (var id in identifications)
-            {
-                id.Applicant = null;
-            }
-
             return identifications;
         }
 
-        public async Task<Identification?> GetIdentificationAsync(int id)
+        /// <summary>
+        /// Retrieves a single Identification record by its own Id.
+        /// </summary>
+        public async Task<Identification> GetIdentificationAsync(int id)
         {
             // Find the identification by its primary key
             return await _context.Identifications.FindAsync(id);
         }
 
-        public async Task<Identification?> UpdateIdentificationAsync(int applicantId, int id, Identification identification)
+        /// <summary>
+        /// Updates an existing Identification record.
+        /// The service finds the model and applies updates from the DTO.
+        /// </summary>
+        public async Task<Identification> UpdateIdentificationAsync(int applicantId, int id, UpdateIdentificationDto identificationDto)
         {
-            // The service ensures the IDs in the route match the IDs in the body.
-            if (id != identification.Id || applicantId != identification.ApplicantId)
-            {
-                return null; // Return null if IDs don't match, signaling a Bad Request.
-            }
-
             // Securely find the existing Identification record using BOTH the identification's ID
             // AND the parent applicant's ID to ensure it belongs to the correct applicant.
             var existingIdentification = await _context.Identifications
@@ -79,8 +85,22 @@ namespace Leadway_RSA_API.Services
                 return null; // Signals to the controller that the record was not found.
             }
 
-            // Update the properties of the tracked entity with the new values.
-            _context.Entry(existingIdentification).CurrentValues.SetValues(identification);
+            // Apply the updates from the DTO to the existing model.
+            // Only update properties that have a value in the DTO.
+            if (identificationDto.DocumentNumber != null)
+            {
+                existingIdentification.DocumentNumber = identificationDto.DocumentNumber;
+            }
+
+            if (identificationDto.IdentificationType != null)
+            {
+                existingIdentification.IdentificationType = identificationDto.IdentificationType;
+            }
+
+            if (identificationDto.ImagePath != null)
+            {
+                existingIdentification.ImagePath = identificationDto.ImagePath;
+            }
 
             try
             {
@@ -111,7 +131,9 @@ namespace Leadway_RSA_API.Services
             }
         }
 
-
+        /// <summary>
+        /// Deletes an Identification record for a specific Applicant.
+        /// </summary>
         public async Task<bool> DeleteIdentificationAsync(int id, int applicantId)
         {
             // 1. Find the Identification to delete, ensuring it belongs to the specified Applicant.
@@ -135,6 +157,9 @@ namespace Leadway_RSA_API.Services
             return true;
         }
 
+        /// <summary>
+        /// A helper method to check if an identification exists by ID and Applicant ID.
+        /// </summary>
         private bool IdentificationExists(int id, int applicantId)
         {
             return _context.Identifications.Any(e => e.Id == id && e.ApplicantId == applicantId);

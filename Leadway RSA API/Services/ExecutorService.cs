@@ -1,5 +1,6 @@
 ﻿using Leadway_RSA_API.Data;
 using Leadway_RSA_API.Models;
+using Leadway_RSA_API.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace Leadway_RSA_API.Services
             _context = context;
         }
 
-        public async Task<Executor?> AddExecutorAsync(int applicantId, Executor executor)
+        public async Task<Executor?> AddExecutorAsync(int applicantId, CreateExecutorsDtos executorDto)
         {
             // 2. Check if the Applicant Exist
             var applicant = await _context.Applicants.FindAsync(applicantId);
@@ -27,13 +28,20 @@ namespace Leadway_RSA_API.Services
                 //return NotFound($"Applicant with ID {applicantId} not found."); // Returns 404
             }
 
-            // 3. Associate Executor with Applicant
-            executor.ApplicantId = applicantId; // Ensure the foreign key is correctly set
+            var executor = new Executor()
+            {
+                ApplicantId = applicantId,
+                ExecutorType = executorDto.ExecutorType,
+                FirstName = executorDto.FirstName,
+                LastName = executorDto.LastName,
+                CompanyName = executorDto.CompanyName,
+                PhoneNumber = executorDto.PhoneNumber,
+                Address = executorDto.Address,
+                City = executorDto.City,
+                State = executorDto.State
+            };
 
-            // Important: Clear any nested navigation property for Applicant in the incoming object
-            // We're linking to an existing Applicant, not creating a new one.
-            executor.Applicant = null;
-
+            
             _context.Executors.Add(executor);
             await _context.SaveChangesAsync();
 
@@ -51,44 +59,21 @@ namespace Leadway_RSA_API.Services
                 .Where(e => e.ApplicantId == applicantId)
                 .ToListAsync(); // Executes the query
 
-            // Cleanup to prevent JSON serialization cycles.
-            foreach (var executor in executors)
-            {
-                executor.Applicant = null;
-            }
-
             return executors;
         }
 
-        public async Task<Executor?> GetExecutorAsync(int id)
+        public async Task<Executor> GetExecutorAsync(int id)
         {
             // Find the executor by its primary key
             var executor = await _context.Executors
                 .Include(e => e.Applicant)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
-            if (executor == null)
-            {
-                return null;
-                //return NotFound($"Executor with ID {id} not found.");
-            }
-
-            // Clean up the circular reference before returning.
-            if (executor.Applicant != null)
-            {
-                executor.Applicant.Executors = null;
-            }
-
             return executor;
         }
 
-        public async Task<Executor?> UpdateExecutorAsync(int applicantId, int id, Executor executor)
+        public async Task<Executor?> UpdateExecutorAsync(int applicantId, int id, UpdateExecutorsDtos executorDto)
         {
-            if (id != executor.Id || applicantId != executor.ApplicantId)
-            {
-                return null; // Both IDs in the route does not match the request body
-            }
-
             // 3. Check for the existing Executor in the database, if not return 404
             var existingExecutor = await _context.Executors.FirstOrDefaultAsync(e => e.Id == id && e.ApplicantId == applicantId);
             if (existingExecutor == null)
@@ -97,8 +82,39 @@ namespace Leadway_RSA_API.Services
                 // return NotFound($"Executor with ID {id} not found or does nor belong to Applicant ID {applicantId}.");
             }
 
-            // 4. Update properties of the existing tracked entity
-            _context.Entry(existingExecutor).CurrentValues.SetValues(executor);
+            // CORRECTED: Apply updates only if the DTO property is not null
+            if (executorDto.ExecutorType != null)
+            {
+                existingExecutor.ExecutorType = executorDto.ExecutorType;
+            }
+            if (executorDto.FirstName != null)
+            {
+                existingExecutor.FirstName = executorDto.FirstName;
+            }
+            if (executorDto.LastName != null)
+            {
+                existingExecutor.LastName = executorDto.LastName;
+            }
+            if (executorDto.CompanyName != null)
+            {
+                existingExecutor.CompanyName = executorDto.CompanyName;
+            }
+            if (executorDto.PhoneNumber != null)
+            {
+                existingExecutor.PhoneNumber = executorDto.PhoneNumber;
+            }
+            if (executorDto.Address != null)
+            {
+                existingExecutor.Address = executorDto.Address;
+            }
+            if (executorDto.City != null)
+            {
+                existingExecutor.City = executorDto.City;
+            }
+            if (executorDto.State != null)
+            {
+                existingExecutor.State = executorDto.State;
+            }
 
             try
             {
@@ -156,6 +172,5 @@ namespace Leadway_RSA_API.Services
         {
             return _context.Executors.Any(e => e.Id == id && e.ApplicantId == applicantId);
         }
-
     }
 }

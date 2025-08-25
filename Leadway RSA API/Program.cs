@@ -27,6 +27,7 @@ builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IAssetAllocationService, AssetAllocationService>();
 builder.Services.AddScoped<IExecutorService, ExecutorService>();
 builder.Services.AddScoped<IGuardianService, GuardianService>();
+builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
 // ------------------------------------
 
 // Configure the DbContext with SQL Server

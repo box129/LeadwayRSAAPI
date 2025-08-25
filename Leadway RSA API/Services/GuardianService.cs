@@ -1,5 +1,6 @@
 ﻿using Leadway_RSA_API.Data;
 using Leadway_RSA_API.Models;
+using Leadway_RSA_API.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace Leadway_RSA_API.Services
             _context = context;
         }
 
-        public async Task<Guardian?> AddGuardianAsync(int applicantId, Guardian guardian)
+        public async Task<Guardian?> AddGuardianAsync(int applicantId, CreateGuardiansDtos guardianDto)
         {
             // Check if the Applicant exists
             var applicant = await _context.Applicants.FindAsync(applicantId);
@@ -27,13 +28,16 @@ namespace Leadway_RSA_API.Services
                 //return NotFound($"Applicant with ID {applicantId} not found.");
             }
 
-            // 3. Associate Guardian with Applicant
-            guardian.ApplicantId = applicantId; // Enssure the foreign is correctly set
-
-            // Important: CLear any nested navigation property for Applicnat in the incoming object
-            // We're linking to an existing Applicant, not creating a new one.
-            guardian.Applicant = null;
-
+            var guardian = new Guardian()
+            {
+               ApplicantId = applicantId,
+               FirstName = guardianDto.FirstName,
+               LastName = guardianDto.LastName,
+               PhoneNumber = guardianDto.PhoneNumber,
+               Address = guardianDto.Address,
+               City = guardianDto.City,
+               State = guardianDto.State
+            };
             _context.Guardians.Add(guardian);
             await _context.SaveChangesAsync();
 
@@ -52,15 +56,6 @@ namespace Leadway_RSA_API.Services
                 .Where(g => g.ApplicantId == applicantId)
                 .ToListAsync();
 
-            // --- ADD THIS BLOCK ---
-            // If lazy loading is enabled, the Applicant property will be populated.
-            // We explicitly set it to null to prevent serialization cycles.
-            foreach (var guardian in guardians)
-            {
-                guardian.Applicant = null;
-            }
-            // --- END OF ADDED BLOCK ---
-
             return guardians;
         }
 
@@ -71,30 +66,11 @@ namespace Leadway_RSA_API.Services
                 .Include(g => g.Applicant)
                 .FirstOrDefaultAsync(g => g.Id == id);
 
-            if (guardian == null)
-            {
-                return null;
-                //return NotFound($"Guardian with ID {id} not found.");
-            }
-
-            // Clean up the circular reference before returning.
-            if (guardian.Applicant != null)
-            {
-                // The Applicant model might have a collection of Guardians.
-                // Setting it to null prevents a serialization loop.
-                guardian.Applicant.Guardians = null;
-            }
-
             return guardian;
         }
 
-        public async Task<Guardian?> UpdateGuardianAsync(int applicantId, int id, Guardian guardian)
+        public async Task<Guardian?> UpdateGuardianAsync(int applicantId, int id, UpdateGuardiansDtos guardianDto)
         {
-            if (id != guardian.Id || applicantId != guardian.ApplicantId)
-            {
-                return null;
-            }
-
             var existingGuardian = await _context.Guardians
                                               .FirstOrDefaultAsync(g => g.Id == id && g.ApplicantId == applicantId);
 
@@ -103,10 +79,31 @@ namespace Leadway_RSA_API.Services
                 return null;
                 //return NotFound($"Guardian with ID {id} not found or does not belong to Applicant ID {applicantId}.");
             }
-            // Important: Clear the navigation property to prevent EF from trying to attach a new Applicant.
-            guardian.Applicant = null;
-
-            _context.Entry(existingGuardian).CurrentValues.SetValues(guardian);
+            
+            if (guardianDto.FirstName != null)
+            {
+                existingGuardian.FirstName = guardianDto.FirstName;
+            }
+            if (guardianDto.LastName != null)
+            {
+                existingGuardian.LastName = guardianDto.LastName;
+            }
+            if (guardianDto.PhoneNumber != null)
+            {
+                existingGuardian.PhoneNumber = guardianDto.PhoneNumber;
+            }
+            if (guardianDto.Address != null)
+            {
+                existingGuardian.Address = guardianDto.Address;
+            }
+            if (guardianDto.City != null)
+            {
+                existingGuardian.City = guardianDto.City;
+            }
+            if (guardianDto.State != null)
+            {
+                existingGuardian.State = guardianDto.State;
+            }
 
             try
             {

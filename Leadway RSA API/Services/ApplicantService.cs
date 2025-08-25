@@ -1,5 +1,6 @@
 ﻿using Leadway_RSA_API.Data;
 using Leadway_RSA_API.Models;
+using Leadway_RSA_API.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace Leadway_RSA_API.Services
@@ -15,15 +16,30 @@ namespace Leadway_RSA_API.Services
             _context = context;
         }
 
-        public async Task<Applicant?> CreateApplicantAsync(Applicant applicant)
+        /// <summary>
+        /// Creates a new Applicant record.
+        /// The service handles mapping the DTO to the model and all business logic.
+        /// </summary>
+        /// <param name="applicantDto">The DTO containing the applicant's details.</param>
+        /// <returns>The created Applicant model, or null if a conflict occurs.</returns>
+        public async Task<Applicant?> CreateApplicantAsync(CreateApplicantDto applicantDto)
         {
-            // --- Business Logic & Data Assignment ---
-            // Set initial audit fields (though DbContext override also handles CreatedDate)
-            // Now, all the business logic from the controller's POST method is here.
-            applicant.CreatedDate = DateTime.UtcNow;
-            applicant.LastModifiedDate = DateTime.UtcNow;
-            applicant.CurrentStep = 1; // Explicitly set current step for a new applicant
-            applicant.IsComplete = false;
+            // The service is responsible for mapping the DTO to the model.
+            var applicant = new Applicant
+            {
+                RSAPin = applicantDto.RSAPin,
+                FirstName = applicantDto.FirstName,
+                LastName = applicantDto.LastName,
+                PhoneNumber = applicantDto.PhoneNumber,
+                EmailAddress = applicantDto.EmailAddress,
+                DateOfBirth = applicantDto.DateOfBirth,
+
+                // The service also sets any initial business-related values.
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedDate = DateTime.UtcNow,
+                CurrentStep = 1,
+                IsComplete = false
+            };
 
             try
             {
@@ -48,6 +64,11 @@ namespace Leadway_RSA_API.Services
             }
         }
 
+        /// <summary>
+        /// Retrieves a single Applicant record by ID.
+        /// </summary>
+        /// <param name="id">The ID of the applicant to retrieve.</param>
+        /// <returns>The Applicant model, or null if not found.</returns>
         public async Task<Applicant?> GetApplicantAsync(int id)
         {
             // The logic for finding an applicant is now encapsulated here.
@@ -55,12 +76,16 @@ namespace Leadway_RSA_API.Services
             return await _context.Applicants.FindAsync(id);
         }
 
-        public async Task<Applicant?> UpdateApplicantAsync(int id, Applicant applicant)
+        /// <summary>
+        /// Updates an existing Applicant record.
+        /// The service finds the model and applies updates from the DTO.
+        /// </summary>
+        /// <param name="id">The ID of the applicant to update.</param>
+        /// <param name="applicantDto">The DTO with the updated details.</param>
+        /// <returns>The updated Applicant model, or null if not found.</returns>
+        public async Task<Applicant?> UpdateApplicantAsync(int id, UpdateApplicantDto applicantDto)
         {
-            // This entire update logic is now in the service layer
-
-            // 3. Find the existing applicant in the database first.
-            // This ensures EF Core is tracking the actual entity you want to modify..
+            // Find the existing record first.
             var existingApplicant = await _context.Applicants.FindAsync(id);
 
             if (existingApplicant == null)
@@ -68,19 +93,18 @@ namespace Leadway_RSA_API.Services
                 return null;
             }
 
-            // Update the properties of the tracked entity.
-            // 4. Update the properties of the *existing tracked entity* with the new values
-            // from the 'applicant' object received in the request body.
-            // CurrentValues.SetValues() is an efficient way to copy all scalar/complex properties.
-            _context.Entry(existingApplicant).CurrentValues.SetValues(applicant);
+            // Apply updates from the DTO. This ensures only provided values are changed.
+            if (applicantDto.RSAPin != null) existingApplicant.RSAPin = applicantDto.RSAPin;
+            if (applicantDto.FirstName != null) existingApplicant.FirstName = applicantDto.FirstName;
+            if (applicantDto.LastName != null) existingApplicant.LastName = applicantDto.LastName;
+            if (applicantDto.PhoneNumber != null) existingApplicant.PhoneNumber = applicantDto.PhoneNumber;
+            if (applicantDto.EmailAddress != null) existingApplicant.EmailAddress = applicantDto.EmailAddress;
+            if (applicantDto.DateOfBirth.HasValue) existingApplicant.DateOfBirth = applicantDto.DateOfBirth.Value;
+            //if (applicantDto.CurrentStep.HasValue) existingApplicant.CurrentStep = applicantDto.CurrentStep.Value;
+            //if (applicantDto.IsComplete.HasValue) existingApplicant.IsComplete = applicantDto.IsComplete.Value;
 
-            // Ensure LastModifiedDate is updated, as the record has changed.
+            // Update the audit field.
             existingApplicant.LastModifiedDate = DateTime.UtcNow;
-
-            // Ensure CreatedDate is not modified.
-            // Note: If you have properties like 'CreatedDate' that should *never* be updated
-            // after initial creation, you might explicitly mark them as not modified:
-            _context.Entry(existingApplicant).Property(a => a.CreatedDate).IsModified = false;
 
             try
             {
@@ -102,27 +126,45 @@ namespace Leadway_RSA_API.Services
             }
         }
 
+        /// <summary>
+        /// Deletes an Applicant record.
+        /// </summary>
+        /// <param name="id">The ID of the applicant to delete.</param>
+        /// <returns>True if the applicant was deleted, otherwise false.</returns>
         public async Task<bool> DeleteApplicantAsync(int id)
         {
-            // 1. Find the Applicant to delete
-            var applicant = await _context.Applicants.FindAsync(id);
+            var applicant = await _context.Applicants
+                .Include(a => a.AssetAllocations)
+                .Include(a => a.Beneficiaries)
+                .Include(a => a.Guardians)
+                .Include(a => a.PaymentTransactions)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
             if (applicant == null)
             {
                 return false;
             }
 
-            // 2. Remove the Applicant
+            // 1. Delete all associated BeneficiaryAssetAllocations
+            _context.BeneficiaryAssetAllocations.RemoveRange(applicant.AssetAllocations);
+
+            // 2. Delete all other associated child records
+            _context.Beneficiaries.RemoveRange(applicant.Beneficiaries);
+            _context.Guardians.RemoveRange(applicant.Guardians);
+            _context.PaymentTransactions.RemoveRange(applicant.PaymentTransactions);
+
+            // 3. Finally, delete the parent Applicant
             _context.Applicants.Remove(applicant);
+
+            // 4. Save all changes in a single transaction
             await _context.SaveChangesAsync();
 
-            // Important: Due to how you've set up relationships (one-to-many, e.g., Applicant has ICollection<Beneficiary>),
-            // Entity Framework Core will, by default, handle cascading deletes.
-            // This means when you delete an Applicant, all its associated Identifications, Beneficiaries, Assets,
-            // Executors, Guardians, BeneficiaryAssetAllocations, and PaymentTransactions will also be deleted from the database.
-            // This is generally desired for parent-child relationships like this, but be aware of its impact.
             return true;
         }
 
+        /// <summary>
+        /// A helper method to check if an applicant exists by ID.
+        /// </summary>
         private bool ApplicantExists(int id)
         {
             return _context.Applicants.Any(e => e.Id == id);

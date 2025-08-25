@@ -12,15 +12,15 @@ namespace Leadway_RSA_API.Models
         // --- Beneficiary Details ---
         [Required]
         [StringLength(100)] // Limit length for first name
-        public required string FirstName { get; set; }
+        public string? FirstName { get; set; }
 
         [Required]
         [StringLength(100)] // Limit length for last name
-        public required string LastName { get; set; }
+        public string? LastName { get; set; }
 
         [Required]
         [StringLength(20)]
-        public required string Gender { get; set; }
+        public string? Gender { get; set; }
 
         // --- Navigation Properties (for Entity Framework Core relationships) ---
         public virtual Applicant? Applicant { get; set; }

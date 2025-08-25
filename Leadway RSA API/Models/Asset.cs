@@ -16,7 +16,7 @@ namespace Leadway_RSA_API.Models
 
         [Required]
         [StringLength(255)] // General name or description of the asset
-        public required string Name { get; set; }
+        public string Name { get; set; }
 
         public decimal? Value { get; set; } // Optional: Estimated monetary value of the asset.
                                             // Nullable (decimal?) as some assets might not have an immediate quantifiable value,

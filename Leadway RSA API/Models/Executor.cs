@@ -3,10 +3,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Leadway_RSA_API.Models
 {
+    [ExecutorTypeValidation]
     public class Executor
     {
         // Apply the custom validation attribute at the class level
-        [ExecutorTypeValidation]
+        
         public int Id { get; set; } // primary key
 
         [Required]
