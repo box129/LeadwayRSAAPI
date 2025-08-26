@@ -19,7 +19,7 @@ namespace Leadway_RSA_API.Services
         /// Adds a new Identification record for a specific Applicant.
         /// The service handles mapping the DTO to the model and all business logic.
         /// </summary>
-        public async Task<Identification> AddIdentificationAsync(int applicantId, CreateIdentificationDto identificationDto)
+        public async Task<Identification?> AddIdentificationAsync(int applicantId, CreateIdentificationDto identificationDto)
         {
             // Check if the Applicant exists
             var applicant = await _context.Applicants.FindAsync(applicantId);
@@ -63,7 +63,7 @@ namespace Leadway_RSA_API.Services
         /// <summary>
         /// Retrieves a single Identification record by its own Id.
         /// </summary>
-        public async Task<Identification> GetIdentificationAsync(int id)
+        public async Task<Identification?> GetIdentificationAsync(int id)
         {
             // Find the identification by its primary key
             return await _context.Identifications.FindAsync(id);
@@ -73,7 +73,7 @@ namespace Leadway_RSA_API.Services
         /// Updates an existing Identification record.
         /// The service finds the model and applies updates from the DTO.
         /// </summary>
-        public async Task<Identification> UpdateIdentificationAsync(int applicantId, int id, UpdateIdentificationDto identificationDto)
+        public async Task<Identification?> UpdateIdentificationAsync(int applicantId, int id, UpdateIdentificationDto identificationDto)
         {
             // Securely find the existing Identification record using BOTH the identification's ID
             // AND the parent applicant's ID to ensure it belongs to the correct applicant.

@@ -8,8 +8,8 @@ namespace Leadway_RSA_API.DTOs
         public int Id { get; set; }
         public int ApplicantId { get; set; }
         public decimal Amount { get; set; }
-        public string Currency { get; set; }
-        public string Status { get; set; }
+        public required string Currency { get; set; }
+        public required string Status { get; set; }
         public string? GatewayReferenceId { get; set; }
         public string? PaymentMethod { get; set; }
         public DateTime TransactionDate { get; set; }

@@ -8,10 +8,10 @@ namespace Leadway_RSA_API.Services
 {
     public interface IBeneficiaryService
     {
-        Task<Beneficiary> AddBeneficiaryAsync(int applicantId, CreateBeneficiaryDto beneficiaryDto);
+        Task<Beneficiary?> AddBeneficiaryAsync(int applicantId, CreateBeneficiaryDto beneficiaryDto);
         Task<List<Beneficiary>> GetBeneficiariesByApplicantIdAsync(int applicantId);
-        Task<Beneficiary> GetBeneficiaryAsync(int id);
-        Task<Beneficiary> UpdateBeneficiaryAsync(int applicantId, int id, UpdateBeneficiaryDto beneficiaryDto);
+        Task<Beneficiary?> GetBeneficiaryAsync(int id);
+        Task<Beneficiary?> UpdateBeneficiaryAsync(int applicantId, int id, UpdateBeneficiaryDto beneficiaryDto);
         Task<bool> DeleteBeneficiaryAsync(int applicantId, int id);
     }
 }

@@ -12,11 +12,11 @@ namespace Leadway_RSA_API.Models
         // --- Common Asset Details ---
         [Required]
         [StringLength(50)] // e.g., "Pension", "BankAccount", "RealEstate", "Shares"
-        public string AssetType { get; set; } // Categorizes the asset type. Consider using an enum for strict types.
+        public required string AssetType { get; set; } // Categorizes the asset type. Consider using an enum for strict types.
 
         [Required]
         [StringLength(255)] // General name or description of the asset
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         public decimal? Value { get; set; } // Optional: Estimated monetary value of the asset.
                                             // Nullable (decimal?) as some assets might not have an immediate quantifiable value,

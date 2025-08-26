@@ -8,10 +8,10 @@ namespace Leadway_RSA_API.Services
 {
     public interface IAssetService
     {
-        Task<Asset> AddAssetAsync(int applicantId, CreateAssetDto assetDto);
+        Task<Asset?> AddAssetAsync(int applicantId, CreateAssetDto assetDto);
         Task<List<Asset>> GetAssetsByApplicantIdAsync(int applicantId);
-        Task<Asset> GetAssetAsync(int id);
-        Task<Asset> UpdateAssetAsync(int applicantId, int id, UpdateAssetDto assetDto);
+        Task<Asset?> GetAssetAsync(int id);
+        Task<Asset?> UpdateAssetAsync(int applicantId, int id, UpdateAssetDto assetDto);
         Task<bool> DeleteAssetAsync(int applicantId, int id);
     }
 }

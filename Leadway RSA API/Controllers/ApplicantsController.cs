@@ -725,7 +725,7 @@ namespace Leadway_RSA_API.Controllers
             var executors = await _executorService.GetExecutorByApplicantIdAsync(applicantId);
             if (!executors.Any())
             {
-                return NotFound($"No executors found for Appllicant with ID {applicantId}.");
+                return NotFound($"No executors found for Applicant with ID {applicantId}.");
             }
 
             var executorDtos = executors.Select(e => new ExecutorsDtos()
@@ -757,7 +757,20 @@ namespace Leadway_RSA_API.Controllers
                 return NotFound($"Executor with ID {id} not found.");
             }
 
-            return Ok(executor); // Returns 200 Ok with the executor data 
+            var executorDto = new ExecutorsDtos()
+            {
+                Id = executor.Id,
+                ApplicantId = executor.ApplicantId,
+                ExecutorType = executor.ExecutorType,
+                FirstName = executor.FirstName,
+                LastName = executor.LastName,
+                CompanyName = executor.CompanyName,
+                PhoneNumber = executor.PhoneNumber,
+                Address = executor.Address,
+                City = executor.City,
+                State = executor.State
+            };
+            return Ok(executorDto); // Returns 200 Ok with the executor data 
         }
 
         /// <summary>

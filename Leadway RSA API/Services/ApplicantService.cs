@@ -146,12 +146,12 @@ namespace Leadway_RSA_API.Services
             }
 
             // 1. Delete all associated BeneficiaryAssetAllocations
-            _context.BeneficiaryAssetAllocations.RemoveRange(applicant.AssetAllocations);
+            _context.BeneficiaryAssetAllocations.RemoveRange(applicant.AssetAllocations!);
 
             // 2. Delete all other associated child records
-            _context.Beneficiaries.RemoveRange(applicant.Beneficiaries);
-            _context.Guardians.RemoveRange(applicant.Guardians);
-            _context.PaymentTransactions.RemoveRange(applicant.PaymentTransactions);
+            _context.Beneficiaries.RemoveRange(applicant.Beneficiaries!);
+            _context.Guardians.RemoveRange(applicant.Guardians!);
+            _context.PaymentTransactions.RemoveRange(applicant.PaymentTransactions!);
 
             // 3. Finally, delete the parent Applicant
             _context.Applicants.Remove(applicant);

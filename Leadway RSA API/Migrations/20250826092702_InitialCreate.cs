@@ -5,11 +5,27 @@
 namespace Leadway_RSA_API.Migrations
 {
     /// <inheritdoc />
-    public partial class MakeAssetBankDetailsNullable : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterColumn<string>(
+                name: "Message",
+                table: "PaymentTransactions",
+                type: "character varying(500)",
+                maxLength: 500,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "character varying(500)",
+                oldMaxLength: 500);
+
+            migrationBuilder.AddColumn<string>(
+                name: "IdentificationType",
+                table: "Identifications",
+                type: "text",
+                nullable: true);
+
             migrationBuilder.AlterColumn<string>(
                 name: "BankName",
                 table: "Assets",
@@ -44,6 +60,22 @@ namespace Leadway_RSA_API.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(
+                name: "IdentificationType",
+                table: "Identifications");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Message",
+                table: "PaymentTransactions",
+                type: "character varying(500)",
+                maxLength: 500,
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "character varying(500)",
+                oldMaxLength: 500,
+                oldNullable: true);
+
             migrationBuilder.AlterColumn<string>(
                 name: "BankName",
                 table: "Assets",

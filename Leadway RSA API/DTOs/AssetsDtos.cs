@@ -8,8 +8,8 @@ namespace Leadway_RSA_API.DTOs
     {
         public int Id { get; set; } // Primary
         public int ApplicantId { get; set; } // Foreign 
-        public string AssetType { get; set; }
-        public string Name { get; set; }
+        public required string AssetType { get; set; }
+        public required string Name { get; set; }
         public decimal? Value { get; set; }
         public string? RSAPin { get; set; }
         public string? PFA { get; set; }
@@ -23,9 +23,9 @@ namespace Leadway_RSA_API.DTOs
     public class CreateAssetDto
     {
         [Required]
-        public string AssetType { get; set; }
+        public required string AssetType { get; set; }
         [Required]
-        public string Name { get; set; }
+        public required string Name { get; set; }
         public decimal? Value { get; set; }
         public string? RSAPin { get; set; }
         public string? PFA { get; set; }

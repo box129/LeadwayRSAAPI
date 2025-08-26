@@ -9,10 +9,10 @@ namespace Leadway_RSA_API.Models
         // An Identification record must always be linked to an Applicant
         public int ApplicantId { get; set; } // Foreign Key
 
-        public string? IdentificationType { get; set; } // Type of identification (e.g., Passort, Driver's License, etc.)
+        public required string IdentificationType { get; set; } // Type of identification (e.g., Passort, Driver's License, etc.)
         [Required]
         [StringLength(100)] // Limit length for dcument number
-        public string? DocumentNumber { get; set; } // The actual license/document number
+        public required string DocumentNumber { get; set; } // The actual license/document number
 
         [StringLength(500)] // Store path/URL, not binary image itself.
         public string? ImagePath { get; set; }

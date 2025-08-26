@@ -12,27 +12,27 @@ namespace Leadway_RSA_API.Models
         // --- Guardian Details ---
         [Required]
         [StringLength(100)] // Limit length for first name
-        public string FirstName { get; set; }
+        public required string FirstName { get; set; }
 
         [Required]
         [StringLength(100)] // Limit length for last name
-        public string LastName { get; set; }
+        public required string LastName { get; set; }
 
         [Required]
         [StringLength(20)]
-        public string PhoneNumber { get; set; }
+        public required string PhoneNumber { get; set; }
 
         [Required]
         [StringLength(255)]
-        public string Address { get; set; }
+        public required string Address { get; set; }
 
         [Required]
         [StringLength(100)] // City name
-        public string City { get; set; }
+        public required string City { get; set; }
 
         [Required]
         [StringLength(100)] // State name (e.g., "Lagos")
-        public string State { get; set; } // Consider using an Enum or lookup table for states for consistency.
+        public required string State { get; set; } // Consider using an Enum or lookup table for states for consistency.
 
         // --- Navigation Property (for Entity Framework Core relationship) ---
         // Navigation property to the parent Applicant (the "one" side of the one-to-many relationship)

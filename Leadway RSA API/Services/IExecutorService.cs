@@ -9,7 +9,7 @@ namespace Leadway_RSA_API.Services
     {
         Task<Executor?> AddExecutorAsync(int applicantId, CreateExecutorsDtos executorDto);
         Task<List<Executor>> GetExecutorByApplicantIdAsync(int applicantId);
-        Task<Executor> GetExecutorAsync(int id);
+        Task<Executor?> GetExecutorAsync(int id);
         Task<Executor?> UpdateExecutorAsync(int applicantId, int id, UpdateExecutorsDtos executorDto);
         Task<bool> DeleteExecutorAsync(int applicantId, int id);
     }

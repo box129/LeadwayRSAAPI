@@ -62,7 +62,7 @@ namespace Leadway_RSA_API.Services
             return executors;
         }
 
-        public async Task<Executor> GetExecutorAsync(int id)
+        public async Task<Executor?> GetExecutorAsync(int id)
         {
             // Find the executor by its primary key
             var executor = await _context.Executors

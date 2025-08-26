@@ -24,7 +24,7 @@ namespace Leadway_RSA_API.Services
         /// Adds a new Beneficiary record for a specific Applicant.
         /// The service handles mapping the DTO to the model and all business logic.
         /// </summary>
-        public async Task<Beneficiary> AddBeneficiaryAsync(int applicantId, CreateBeneficiaryDto beneficiaryDto)
+        public async Task<Beneficiary?> AddBeneficiaryAsync(int applicantId, CreateBeneficiaryDto beneficiaryDto)
         {
             // Check if the applicant exists
             var applicant = await _context.Applicants.FindAsync(applicantId);
@@ -71,7 +71,7 @@ namespace Leadway_RSA_API.Services
         /// <summary>
         /// Retrieves a single Beneficiary record by its own Id.
         /// </summary>
-        public async Task<Beneficiary> GetBeneficiaryAsync(int id)
+        public async Task<Beneficiary?> GetBeneficiaryAsync(int id)
         {
             // FindAsync is sufficient as it only needs the primary key.
             return await _context.Beneficiaries.FindAsync(id);
@@ -81,7 +81,7 @@ namespace Leadway_RSA_API.Services
         /// Updates an existing Beneficiary record.
         /// The service finds the model and applies updates from the DTO.
         /// </summary>
-        public async Task<Beneficiary> UpdateBeneficiaryAsync(int applicantId, int id, UpdateBeneficiaryDto beneficiaryDto)
+        public async Task<Beneficiary?> UpdateBeneficiaryAsync(int applicantId, int id, UpdateBeneficiaryDto beneficiaryDto)
         {
             var existingBeneficiary = await _context.Beneficiaries.FirstOrDefaultAsync(b => b.Id == id && b.ApplicantId == applicantId);
             if (existingBeneficiary == null)

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Leadway_RSA_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250724122615_MakeAssetBankDetailsNullable")]
-    partial class MakeAssetBankDetailsNullable
+    [Migration("20250826092702_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -314,6 +314,9 @@ namespace Leadway_RSA_API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("IdentificationType")
+                        .HasColumnType("text");
+
                     b.Property<string>("ImagePath")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -352,7 +355,6 @@ namespace Leadway_RSA_API.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("Message")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 

@@ -23,7 +23,7 @@ namespace Leadway_RSA_API.Services
         /// <summary>
         /// Adds a new Asset record for a specific Applicant.
         /// </summary>
-        public async Task<Asset> AddAssetAsync(int applicantId, CreateAssetDto assetDto)
+        public async Task<Asset?> AddAssetAsync(int applicantId, CreateAssetDto assetDto)
         {
             // 2. Check if the Applicant exists
             var applicant = await _context.Applicants.FindAsync(applicantId);
@@ -68,13 +68,13 @@ namespace Leadway_RSA_API.Services
             return assets; // Returns 200 OK with the list of assets
         }
 
-        public async Task<Asset> GetAssetAsync(int id)
+        public async Task<Asset?> GetAssetAsync(int id)
         {
             // Find the asset by its primary Key
             return await _context.Assets.FindAsync(id);
         }
 
-        public async Task<Asset> UpdateAssetAsync(int applicantId, int id, UpdateAssetDto assetDto)
+        public async Task<Asset?> UpdateAssetAsync(int applicantId, int id, UpdateAssetDto assetDto)
         {
            // Find the existing Assset in the database, if not found return 404
             var existingAsset = await _context.Assets.FirstOrDefaultAsync(a => a.Id == id && a.ApplicantId == applicantId);
