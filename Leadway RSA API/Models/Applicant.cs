@@ -21,6 +21,7 @@
         public DateTime LastModifiedDate { get; set; }
 
         // --- Navigation Properties (for Entity Framework Core relationships) ---
+        public virtual PersonalDetails? PersonalDetails { get; set; }
         public virtual ICollection<Identification>? Identifications { get; set; } = new List<Identification>();
         // An Applicant can have one or more identification records (e.g., if you store historical IDs or multiple types).
         public virtual ICollection<Beneficiary>? Beneficiaries { get; set; } = new List<Beneficiary>(); // Beneficiaries are like the heirs of the will.

@@ -28,11 +28,18 @@ namespace Leadway_RSA_API.Services
                 return null; // Signals to the controller that the applicant was not found.
             }
 
+            if (!Enum.TryParse<IdentificationType>(identificationDto.IdentificationType, true, out var identificationType))
+            {
+                // Handle invalid enum string, e.g., return null or throw a custom exception
+                return null;
+            }
+
+
             // The service is responsible for mapping the DTO to the model.
             var identification = new Identification
             {
                 ApplicantId = applicantId,
-                IdentificationType = identificationDto.IdentificationType,
+                IdentificationType = identificationType, // Now a valid enum value
                 DocumentNumber = identificationDto.DocumentNumber,
                 ImagePath = identificationDto.ImagePath,
                 UploadDate = DateTime.UtcNow // Set upload date on the server.
@@ -92,9 +99,9 @@ namespace Leadway_RSA_API.Services
                 existingIdentification.DocumentNumber = identificationDto.DocumentNumber;
             }
 
-            if (identificationDto.IdentificationType != null)
+            if (Enum.TryParse<IdentificationType>(identificationDto.IdentificationType, true, out var identificationType))
             {
-                existingIdentification.IdentificationType = identificationDto.IdentificationType;
+                existingIdentification.IdentificationType = identificationType;
             }
 
             if (identificationDto.ImagePath != null)

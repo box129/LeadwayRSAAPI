@@ -24,7 +24,15 @@ namespace Leadway_RSA_API.DTOs
     {
         public int Id { get; set; }
         public int ApplicantId { get; set; }
-        public required string ExecutorType { get; set; }
+        // Added to distinguish between default and user-added executors.
+        public bool IsDefault { get; set; }
+
+        // Added to hold the name of the default executor ("Leadway Trustees").
+        // It's nullable as it's not used for user-added executors.
+        public string? Name { get; set; }
+
+        // Made nullable because the default executor doesn't have an ExecutorType.
+        public string? ExecutorType { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? CompanyName { get; set; }

@@ -1,9 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Leadway_RSA_API.Services;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Leadway_RSA_API.Models
 {
-    public class BeneficiaryAssetAllocation
+    public class BeneficiaryAssetAllocation : IAuditable
     {
         public int Id { get; set; } // Primary key
 
@@ -20,6 +21,9 @@ namespace Leadway_RSA_API.Models
         [Range(0.01, 100.00, ErrorMessage = "Percentage must be between 0.01 and 100.")] // Percentage should be positive and up to 100
         [Column(TypeName = "decimal(5, 2)")] // Explicitly define decimal precision and scale for database
         public decimal Percentage { get; set; } // The percentage of the Asset allocated to the Beneficiary (e.g., 50.00 for 50%).
+
+        public DateTime CreatedDate { get; set; }
+        public DateTime LastModifiedDate { get; set; }
 
         // --- Navigation Properties ---
         // Navigation property to the parent Applicant

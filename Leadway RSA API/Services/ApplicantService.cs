@@ -32,7 +32,8 @@ namespace Leadway_RSA_API.Services
                 LastName = applicantDto.LastName,
                 PhoneNumber = applicantDto.PhoneNumber,
                 EmailAddress = applicantDto.EmailAddress,
-                DateOfBirth = applicantDto.DateOfBirth,
+                // The fix: Convert the DateOfBirth to UTC
+                DateOfBirth = applicantDto.DateOfBirth.ToUniversalTime(),
 
                 // The service also sets any initial business-related values.
                 CreatedDate = DateTime.UtcNow,

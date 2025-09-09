@@ -21,6 +21,7 @@ namespace Leadway_RSA_API.Controllers
     public class ApplicantsController : ControllerBase
     {
         private readonly IApplicantService _applicantService;
+        private readonly IPersonalDetailsService _personalDetailsService;
         private readonly IIdentificationService _identificationService;
         private readonly IBeneficiaryService _beneficiaryService;
         private readonly IAssetService _assetService;
@@ -31,10 +32,11 @@ namespace Leadway_RSA_API.Controllers
         // You might keep the DbContext here if other methods you haven't refactored yet still need it.
         //private readonly ApplicationDbContext _context;
 
-        public ApplicantsController(IApplicantService applicantService, IIdentificationService identificationService, IBeneficiaryService beneficiaryService, IAssetService assetService, IAssetAllocationService assetAllocationService, IExecutorService executorService, IGuardianService guardianService, IPaymentTransactionService paymentTransactionService)
+        public ApplicantsController(IApplicantService applicantService, IPersonalDetailsService personalDetailsService,IIdentificationService identificationService, IBeneficiaryService beneficiaryService, IAssetService assetService, IAssetAllocationService assetAllocationService, IExecutorService executorService, IGuardianService guardianService, IPaymentTransactionService paymentTransactionService)
         {
-           // _context = context;
+            // _context = context;
             _applicantService = applicantService;
+            _personalDetailsService = personalDetailsService;
             _identificationService = identificationService;
             _beneficiaryService = beneficiaryService;
             _assetService = assetService;
@@ -160,6 +162,110 @@ namespace Leadway_RSA_API.Controllers
             return NoContent();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CreatePersonalDetails(int applicantId, [FromBody] CreatePersonalDetailsDto detailsDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var newDetails = await _personalDetailsService.CreatePersonalDetailsAsync(applicantId, detailsDto);
+            if (newDetails == null)
+            {
+                return BadRequest("Personal details for this applicant already exist.");
+            }
+
+            var personalDetailsDto = new PersonalDetailsDto
+            {
+                Id = newDetails.Id,
+                ApplicantId = newDetails.ApplicantId,
+                PlaceOfBirth = newDetails.PlaceOfBirth,
+                Religion = newDetails.Religion,
+                Gender = newDetails.Gender,
+                HomeAddress = newDetails.HomeAddress,
+                State = newDetails.State,
+                City = newDetails.City
+            };
+
+            return CreatedAtAction(nameof(GetPersonalDetails), new { applicantId = personalDetailsDto.ApplicantId }, personalDetailsDto);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPersonalDetails(int applicantId)
+        {
+            var personalDetails = await _personalDetailsService.GetPersonalDetailsByApplicantIdAsync(applicantId);
+            if (personalDetails == null)
+            {
+                return NotFound("Personal details not found for this applicant.");
+            }
+
+            var personalDetailsDto = new PersonalDetailsDto
+            {
+                Id = personalDetails.Id,
+                ApplicantId = personalDetails.ApplicantId,
+                PlaceOfBirth = personalDetails.PlaceOfBirth,
+                Religion = personalDetails.Religion,
+                Gender = personalDetails.Gender,
+                HomeAddress = personalDetails.HomeAddress,
+                State = personalDetails.State,
+                City = personalDetails.City,
+                PassportPhotoPath = personalDetails.PassportPhotoPath,
+                SignaturePath = personalDetails.SignaturePath
+            };
+
+            return Ok(personalDetailsDto);
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdatePersonalDetails(int applicantId, [FromBody] UpdatePersonalDetailsDto detailsDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var updatedDetails = await _personalDetailsService.UpdatePersonalDetailsAsync(applicantId, detailsDto);
+            if (updatedDetails == null)
+            {
+                return NotFound("Personal details not found for this applicant.");
+            }
+
+            return NoContent();
+        }
+
+        [HttpPost("passport-photo")]
+        public async Task<IActionResult> UploadPassportPhoto(int applicantId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("File is empty or not provided.");
+            }
+            var result = await _personalDetailsService.UploadPassportPhotoAsync(applicantId, file);
+            if (!result)
+            {
+                return NotFound("Personal details not found for this applicant.");
+            }
+
+            return Ok("Passport photo uploaded successfully.");
+        }
+
+        [HttpPost("signature")]
+        public async Task<IActionResult> UploadSignature(int applicantId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("File is empty or not provided.");
+            }
+
+            var result = await _personalDetailsService.UploadSignatureAsync(applicantId, file);
+            if (!result)
+            {
+                return NotFound("Personal details not found for this applicant.");
+            }
+
+            return Ok("Signature uploaded successfully.");
+        }
 
         /// <summary>
         /// Adds a new Identification record for a specific Applicant.
@@ -185,7 +291,7 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = addedIdentification.Id,
                 ApplicantId = addedIdentification.ApplicantId,
-                IdentificationType = addedIdentification.IdentificationType,
+                IdentificationType = addedIdentification.IdentificationType.ToString(),
                 DocumentNumber = addedIdentification.DocumentNumber,
                 ImagePath = addedIdentification.ImagePath,
                 UploadDate = addedIdentification.UploadDate
@@ -213,7 +319,7 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = i.Id,
                 ApplicantId = i.ApplicantId,
-                IdentificationType = i.IdentificationType,
+                IdentificationType = i.IdentificationType.ToString(),
                 DocumentNumber = i.DocumentNumber,
                 ImagePath = i.ImagePath,
                 UploadDate = i.UploadDate
@@ -238,7 +344,7 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = identification.Id,
                 ApplicantId = identification.ApplicantId,
-                IdentificationType = identification.IdentificationType,
+                IdentificationType = identification.IdentificationType.ToString(),
                 DocumentNumber = identification.DocumentNumber,
                 ImagePath = identification.ImagePath,
                 UploadDate = identification.UploadDate
@@ -423,14 +529,11 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = addedAsset.Id,
                 ApplicantId = addedAsset.ApplicantId,
-                AssetType = addedAsset.AssetType,
                 Name = addedAsset.Name,
-                Value = addedAsset.Value,
                 RSAPin = addedAsset.RSAPin,
                 PFA = addedAsset.PFA,
-                BankName = addedAsset.BankName,
-                AccountNumber = addedAsset.AccountNumber,
-                AccountType = addedAsset.AccountType
+                SalaryBankName = addedAsset.SalaryBankName,
+                SalaryAccountNumber = addedAsset.SalaryAccountNumber,
             };
 
             // 4. Return success response (201 Created)
@@ -454,14 +557,11 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = a.Id,
                 ApplicantId = a.ApplicantId,
-                AssetType = a.AssetType,
                 Name = a.Name,
-                Value = a.Value,
                 RSAPin = a.RSAPin,
                 PFA = a.PFA,
-                BankName = a.BankName,
-                AccountNumber = a.AccountNumber,
-                AccountType = a.AccountType
+                SalaryBankName = a.SalaryBankName,
+                SalaryAccountNumber = a.SalaryAccountNumber,
             }).ToList();
 
             return Ok(assetDtos); // Returns 200 Ok with the list of assets
@@ -483,14 +583,11 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = asset.Id,
                 ApplicantId = asset.ApplicantId,
-                AssetType = asset.AssetType,
                 Name = asset.Name,
-                Value = asset.Value,
                 RSAPin = asset.RSAPin,
                 PFA = asset.PFA,
-                BankName = asset.BankName,
-                AccountNumber = asset.AccountNumber,
-                AccountType = asset.AccountType
+                SalaryBankName = asset.SalaryBankName,
+                SalaryAccountNumber = asset.SalaryAccountNumber,
             };
 
             return Ok(assetDto); // Returns 200 OK with the asset data
@@ -591,7 +688,6 @@ namespace Leadway_RSA_API.Controllers
                 {
                     Id = aa.Asset.Id,
                     Name = aa.Asset.Name,
-                    AssetType = aa.Asset.AssetType
                 },
                 Beneficiary = aa.Beneficiary == null ? null : new SimpleBeneficiaryDto
                 {
@@ -631,7 +727,6 @@ namespace Leadway_RSA_API.Controllers
                 {
                     Id = allocation.Asset.Id,
                     Name = allocation.Asset.Name,
-                    AssetType = allocation.Asset.AssetType
                 } : null,
                 Beneficiary = (allocation.Beneficiary != null) ? new SimpleBeneficiaryDto
                 {
@@ -701,7 +796,10 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = addedExecutor.Id,
                 ApplicantId = addedExecutor.ApplicantId,
-                ExecutorType = addedExecutor.ExecutorType,
+                IsDefault = addedExecutor.IsDefault, // Map the new property
+                // Map either the Name or the ExecutorType based on IsDefault
+                Name = addedExecutor.IsDefault ? addedExecutor.Name : null,
+                ExecutorType = addedExecutor.IsDefault ? null : addedExecutor.ExecutorType.ToString(),
                 FirstName = addedExecutor.FirstName,
                 LastName = addedExecutor.LastName,
                 CompanyName = addedExecutor.CompanyName,
@@ -732,7 +830,9 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = e.Id,
                 ApplicantId = e.ApplicantId,
-                ExecutorType = e.ExecutorType,
+                IsDefault = e.IsDefault, // Map the new property
+                Name = e.IsDefault ? e.Name : null, // Correctly map Name for default executor
+                ExecutorType = e.IsDefault ? null : e.ExecutorType.ToString(), // Correctly map ExecutorType for user-added ones
                 FirstName = e.FirstName,
                 LastName = e.LastName,
                 CompanyName = e.CompanyName,
@@ -761,7 +861,9 @@ namespace Leadway_RSA_API.Controllers
             {
                 Id = executor.Id,
                 ApplicantId = executor.ApplicantId,
-                ExecutorType = executor.ExecutorType,
+                IsDefault = executor.IsDefault, // Map the new property
+                Name = executor.IsDefault ? executor.Name : null,
+                ExecutorType = executor.IsDefault ? null : executor.ExecutorType.ToString(),
                 FirstName = executor.FirstName,
                 LastName = executor.LastName,
                 CompanyName = executor.CompanyName,
@@ -835,6 +937,7 @@ namespace Leadway_RSA_API.Controllers
                 FirstName = addedGuardian.FirstName,
                 LastName = addedGuardian.LastName,
                 PhoneNumber = addedGuardian.PhoneNumber,
+                Relationship = guardianDto.Relationship,
                 Address = addedGuardian.Address,
                 City = addedGuardian.City,
                 State = addedGuardian.State
@@ -866,6 +969,7 @@ namespace Leadway_RSA_API.Controllers
                 FirstName = g.FirstName,
                 LastName = g.LastName,
                 PhoneNumber = g.PhoneNumber,
+                Relationship = g.Relationship,
                 Address = g.Address,
                 City = g.City,
                 State = g.State
@@ -895,6 +999,7 @@ namespace Leadway_RSA_API.Controllers
                 FirstName = guardian.FirstName,
                 LastName = guardian.LastName,
                 PhoneNumber = guardian.PhoneNumber,
+                Relationship = guardian.Relationship,
                 Address = guardian.Address,
                 City = guardian.City,
                 State = guardian.State

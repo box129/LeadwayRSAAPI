@@ -7,6 +7,8 @@ namespace Leadway_RSA_API.Services
 {
     public interface IExecutorService
     {
+        // New method to handle the creation of the default "Leadway Trustees" executor
+        Task AddDefaultExecutorAsync(int applicantId);
         Task<Executor?> AddExecutorAsync(int applicantId, CreateExecutorsDtos executorDto);
         Task<List<Executor>> GetExecutorByApplicantIdAsync(int applicantId);
         Task<Executor?> GetExecutorAsync(int id);

@@ -36,14 +36,11 @@ namespace Leadway_RSA_API.Services
             var asset = new Asset()
             {
                 ApplicantId = applicantId,
-                AssetType = assetDto.AssetType,
                 Name = assetDto.Name,
-                Value = assetDto.Value,
                 RSAPin = assetDto.RSAPin,
                 PFA = assetDto.PFA,
-                BankName = assetDto.BankName,
-                AccountNumber = assetDto.AccountNumber,
-                AccountType = assetDto.AccountType
+                SalaryBankName = assetDto.SalaryBankName,
+                SalaryAccountNumber = assetDto.SalaryAccountNumber,
             };
             // It's good practice to clear the navigation property to avoid
             // any unintended side effects in Entity Framework Core.
@@ -87,17 +84,9 @@ namespace Leadway_RSA_API.Services
 
             // Apply the updates from the DTO to the existing model.
             // Only update properties that have a value in the DTO.
-            if (assetDto.AssetType != null)
-            {
-                existingAsset.AssetType = assetDto.AssetType;
-            }
             if (assetDto.Name != null)
             {
                 existingAsset.Name = assetDto.Name;
-            }
-            if (assetDto.Value != null)
-            {
-                existingAsset.Value = assetDto.Value;
             }
             if (assetDto.RSAPin != null)
             {
@@ -107,17 +96,13 @@ namespace Leadway_RSA_API.Services
             {
                 existingAsset.PFA = assetDto.PFA;
             }
-            if (assetDto.BankName != null)
+            if (assetDto.SalaryBankName != null)
             {
-                existingAsset.BankName = assetDto.BankName;
+                existingAsset.SalaryBankName = assetDto.SalaryBankName;
             }
-            if (assetDto.AccountNumber != null)
+            if (assetDto.SalaryAccountNumber != null)
             {
-                existingAsset.AccountNumber = assetDto.AccountNumber;
-            }
-            if (assetDto.AccountType != null)
-            {
-                existingAsset.AccountType = assetDto.AccountType;
+                existingAsset.SalaryAccountNumber = assetDto.SalaryAccountNumber;
             }
 
             try

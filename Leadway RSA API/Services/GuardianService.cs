@@ -34,6 +34,7 @@ namespace Leadway_RSA_API.Services
                FirstName = guardianDto.FirstName,
                LastName = guardianDto.LastName,
                PhoneNumber = guardianDto.PhoneNumber,
+               Relationship = guardianDto.Relationship,
                Address = guardianDto.Address,
                City = guardianDto.City,
                State = guardianDto.State
@@ -91,6 +92,10 @@ namespace Leadway_RSA_API.Services
             if (guardianDto.PhoneNumber != null)
             {
                 existingGuardian.PhoneNumber = guardianDto.PhoneNumber;
+            }
+            if (guardianDto.Relationship != null)
+            {
+                existingGuardian.Relationship = guardianDto.Relationship;
             }
             if (guardianDto.Address != null)
             {

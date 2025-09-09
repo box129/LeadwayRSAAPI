@@ -18,6 +18,25 @@ namespace Leadway_RSA_API.Services
             _context = context;
         }
 
+        // This is a new, separate method to create the default executor
+        public async Task AddDefaultExecutorAsync(int applicantId)
+        {
+            var defaultExecutor = new Executor
+            {
+                ApplicantId = applicantId,
+                IsDefault = true, // Sets this as the default executor
+                Name = "Leadway Trustees",
+                PhoneNumber = "08076578675",
+                Address = "121/123 Funsho Williams Avenue, Iponri",
+                State = "Lagos",
+                City = "Surulere"
+            };
+
+            _context.Executors.Add(defaultExecutor);
+            await _context.SaveChangesAsync();
+        }
+
+
         public async Task<Executor?> AddExecutorAsync(int applicantId, CreateExecutorsDtos executorDto)
         {
             // 2. Check if the Applicant Exist
@@ -31,7 +50,8 @@ namespace Leadway_RSA_API.Services
             var executor = new Executor()
             {
                 ApplicantId = applicantId,
-                ExecutorType = executorDto.ExecutorType,
+                IsDefault = false, // All user-added executors are not default
+                ExecutorType = Enum.Parse<ExecutorType>(executorDto.ExecutorType, true),
                 FirstName = executorDto.FirstName,
                 LastName = executorDto.LastName,
                 CompanyName = executorDto.CompanyName,
@@ -78,14 +98,20 @@ namespace Leadway_RSA_API.Services
             var existingExecutor = await _context.Executors.FirstOrDefaultAsync(e => e.Id == id && e.ApplicantId == applicantId);
             if (existingExecutor == null)
             {
-                return null;
-                // return NotFound($"Executor with ID {id} not found or does nor belong to Applicant ID {applicantId}.");
+                return null; // Executor not found
             }
 
-            // CORRECTED: Apply updates only if the DTO property is not null
+            // CRITICAL FIX: Prevent updating the default executor.
+            // The "Leadway Trustees" executor should never be updated via this endpoint.
+            if (existingExecutor.IsDefault)
+            {
+                return null; // Or throw a custom exception
+            }
+
+            // Apply updates only if the DTO property is not null
             if (executorDto.ExecutorType != null)
             {
-                existingExecutor.ExecutorType = executorDto.ExecutorType;
+                existingExecutor.ExecutorType = Enum.Parse<ExecutorType>(executorDto.ExecutorType, true);
             }
             if (executorDto.FirstName != null)
             {
@@ -147,10 +173,10 @@ namespace Leadway_RSA_API.Services
             var executor = await _context.Executors
                                       .FirstOrDefaultAsync(e => e.Id == id && e.ApplicantId == applicantId);
 
-            if (executor == null)
+            // A user cannot delete the default executor
+            if (executor == null || executor.IsDefault)
             {
                 return false;
-                //return NotFound($"Executor with ID {id} not found or does not belong to Applicant ID {applicantId}.");
             }
 
             _context.Executors.Remove(executor);

@@ -3,32 +3,38 @@ using Leadway_RSA_API.Models;
 
 namespace Leadway_RSA_API.CustomValidators
 {
-    // This custom attribute handles the conditional logic.
-    // It inherits from ValidationAttribute and overrides the IsValid method.
     public class ExecutorTypeValidationAttribute : ValidationAttribute
     {
-        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
             var executor = (Executor)validationContext.ObjectInstance;
 
-            if (executor.ExecutorType == "Individual")
+            // If it's the default executor, no further validation is needed for specific fields
+            if (executor.IsDefault)
+            {
+                return ValidationResult.Success;
+            }
+
+            // For user-added executors, validate based on the ExecutorType
+            if (executor.ExecutorType == null)
+            {
+                return new ValidationResult("ExecutorType is required for a user-added executor.", new[] { nameof(Executor.ExecutorType) });
+            }
+
+            if (executor.ExecutorType == ExecutorType.Individual)
             {
                 if (string.IsNullOrEmpty(executor.FirstName) || string.IsNullOrEmpty(executor.LastName))
                 {
-                    // Return a validation failure if the condition is not met.
-                    return new ValidationResult("First Name and Last Name are required for Individual ExecutorType.", new[] { "FirstName", "LastName" });
+                    return new ValidationResult("First Name and Last Name are required for an Individual Executor.", new[] { nameof(Executor.FirstName), nameof(Executor.LastName) });
                 }
             }
-            else if (executor.ExecutorType == "Company")
+            else if (executor.ExecutorType == ExecutorType.Company)
             {
                 if (string.IsNullOrEmpty(executor.CompanyName))
                 {
-                    // Return a validation failure if the condition is not met.
-                    return new ValidationResult("Company Name is required for Company ExecutorType.", new[] { "CompanyName" });
+                    return new ValidationResult("Company Name is required for a Company Executor.", new[] { nameof(Executor.CompanyName) });
                 }
             }
-
-            // Return success if all validation passes.
             return ValidationResult.Success;
         }
     }

@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Leadway_RSA_API.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace Leadway_RSA_API.Models
 {
-    public class Guardian
+    public class Guardian : IAuditable
     {
         public int Id { get; set; } // primary key
 
@@ -23,6 +24,9 @@ namespace Leadway_RSA_API.Models
         public required string PhoneNumber { get; set; }
 
         [Required]
+        public required string Relationship { get; set; }
+
+        [Required]
         [StringLength(255)]
         public required string Address { get; set; }
 
@@ -33,6 +37,9 @@ namespace Leadway_RSA_API.Models
         [Required]
         [StringLength(100)] // State name (e.g., "Lagos")
         public required string State { get; set; } // Consider using an Enum or lookup table for states for consistency.
+
+        public DateTime CreatedDate { get; set; }
+        public DateTime LastModifiedDate { get; set; }
 
         // --- Navigation Property (for Entity Framework Core relationship) ---
         // Navigation property to the parent Applicant (the "one" side of the one-to-many relationship)

@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Leadway_RSA_API.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace Leadway_RSA_API.Models
 {
-    public class Asset
+    public class Asset : IAuditable
     {
         public int Id { get; set; } // primary key
 
@@ -11,17 +12,10 @@ namespace Leadway_RSA_API.Models
 
         // --- Common Asset Details ---
         [Required]
-        [StringLength(50)] // e.g., "Pension", "BankAccount", "RealEstate", "Shares"
-        public required string AssetType { get; set; } // Categorizes the asset type. Consider using an enum for strict types.
-
-        [Required]
         [StringLength(255)] // General name or description of the asset
         public required string Name { get; set; }
 
-        public decimal? Value { get; set; } // Optional: Estimated monetary value of the asset.
-                                            // Nullable (decimal?) as some assets might not have an immediate quantifiable value,
-                                            // or it might be gathered later.
-
+        
         // --- Pension Specific Details (Nullable if AssetType is not "Pension") ---
         [StringLength(50)]
         public string? RSAPin { get; set; } // RSA PIN Number for pension assets (Nullable)
@@ -31,13 +25,13 @@ namespace Leadway_RSA_API.Models
 
         // --- Bank Account Specific Details (Nullable if AssetType is not "BankAccount") ---
         [StringLength(100)]
-        public string? BankName { get; set; } // Name of the bank (Nullable)
+        public string? SalaryBankName { get; set; } // Name of the bank (Nullable)
 
         [StringLength(50)]
-        public string? AccountNumber { get; set; } // Bank account number (Nullable)
+        public string? SalaryAccountNumber { get; set; } // Bank account number (Nullable)
 
-        [StringLength(50)]
-        public string? AccountType { get; set; } // e.g., "Savings", "Current", "Domiciliary" (Nullable)
+        public DateTime CreatedDate { get; set; }
+        public DateTime LastModifiedDate { get; set; }
 
         // --- Navigation Properties (for Entity Framework Core relationships) ---
 

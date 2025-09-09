@@ -1,9 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Leadway_RSA_API.Services;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Leadway_RSA_API.Models
 {
-    public class PaymentTransaction
+    public class PaymentTransaction : IAuditable
     {
         public int Id { get; set; } // primary Key
 
@@ -34,6 +35,9 @@ namespace Leadway_RSA_API.Models
 
         [StringLength(500)] // Optional message from the payment gateway or for internal notes
         public string? Message { get; set; } // e.g., success message, error details
+
+        public DateTime CreatedDate { get; set; }
+        public DateTime LastModifiedDate { get; set; }
 
         // --- Navigation Property ---
         // Navigation property to the parent Applicant (the "one" side of the one-to-many relationship)

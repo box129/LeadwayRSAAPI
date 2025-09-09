@@ -9,7 +9,7 @@ namespace Leadway_RSA_API.DTOs
         public int Id { get; set; }
         public int ApplicantId { get; set; }
         public required string IdentificationType { get; set; }
-        public required string DocumentNumber { get; set; }
+        public string? DocumentNumber { get; set; }
         public string? ImagePath { get; set; }
         public DateTime UploadDate { get; set; }
     }

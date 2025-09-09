@@ -1,10 +1,17 @@
 ﻿using Leadway_RSA_API.CustomValidators;
+using Leadway_RSA_API.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace Leadway_RSA_API.Models
 {
-    [ExecutorTypeValidation]
-    public class Executor
+    public enum ExecutorType
+    {
+        Individual,
+        Company
+    }
+
+    [ExecutorTypeValidation] // Custom Validation
+    public class Executor : IAuditable
     {
         // Apply the custom validation attribute at the class level
         
@@ -13,40 +20,45 @@ namespace Leadway_RSA_API.Models
         [Required]
         public int ApplicantId { get; set; } // Foreign Key referencing thre applicabt table Id
 
-        // --- Executor Details ---
-        [Required]
-        [StringLength(50)] // "Individual or Company"
-        public required string ExecutorType { get; set; }
+        // We use a boolean to indicate if this is the default executor.
+        public bool IsDefault { get; set; }
 
         [StringLength(100)]
-        public string? FirstName { get; set; } // Nullable if ExecutorType is "Company"
+        public string? Name { get; set; } // Used for the default executor ("Leadway Trustees")
+
+
+        // --- Details for user-added executors ---
+        // These are only used if IsDefault is false.
+        public ExecutorType? ExecutorType { get; set; } // Nullable because it's not applicable for the default executor.
 
         [StringLength(100)]
-        public string? LastName { get; set; }  // Nullable if ExecutorType is "Company"
+        public string? FirstName { get; set; }
 
-        // --- Details for Company Executor (Used if ExecutorType is "Company") ---
+        [StringLength(100)]
+        public string? LastName { get; set; }
+
         [StringLength(255)]
-        public string? CompanyName { get; set; } // Nullable if ExecutorType is "Individual"
+        public string? CompanyName { get; set; }
 
-        // --- Common Details for both Individual and Company Executors ---
+        // --- Common details for all executors ---
         [Required]
         [StringLength(20)]
         public required string PhoneNumber { get; set; }
 
         [Required]
-        [StringLength(255)] // Sufficient length for a street address
+        [StringLength(255)]
         public required string Address { get; set; }
 
         [Required]
-        [StringLength(100)] // City name
+        [StringLength(100)]
         public required string City { get; set; }
 
         [Required]
-        [StringLength(100)] // State name (e.g., "Lagos")
-        public required string State { get; set; } // Consider using an Enum or lookup table for states for consistency.
+        [StringLength(100)]
+        public required string State { get; set; }
 
-        // --- Navigation Property (for Entity Framework Core relationship) ---
-        // Navigation property to the parent Applicant (the "one" side of the one-to-many relationship)
+        public DateTime CreatedDate { get; set; }
+        public DateTime LastModifiedDate { get; set; }
         public virtual Applicant? Applicant { get; set; }
     }
 }

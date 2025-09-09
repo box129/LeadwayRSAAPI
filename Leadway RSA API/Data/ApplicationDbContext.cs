@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Leadway_RSA_API.Models;
+﻿using Leadway_RSA_API.Models;
+using Leadway_RSA_API.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Leadway_RSA_API.Data
 {
@@ -12,6 +13,7 @@ namespace Leadway_RSA_API.Data
 
         // Defining the DbSet for each entities
         public DbSet<Applicant> Applicants { get; set; }
+        public DbSet<PersonalDetails> PersonalDetails { get; set; }
         public DbSet<Identification> Identifications { get; set; }
 
         public DbSet<Beneficiary> Beneficiaries { get; set; }
@@ -40,7 +42,13 @@ namespace Leadway_RSA_API.Data
                 .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'")
                 .ValueGeneratedOnAddOrUpdate(); // Database generates/updates this value
 
-            // --- Identification Configurations --
+            // -- PersonalDetails Configurations ---
+            modelBuilder.Entity<PersonalDetails>()
+                .HasOne(pd => pd.Applicant)
+                .WithOne(a => a.PersonalDetails)
+                .HasForeignKey<PersonalDetails>(pd => pd.ApplicantId);
+
+            // --- Identification Configurations ---
             modelBuilder.Entity<Identification>()
                 .HasOne(i => i.Applicant)
                 .WithMany(a => a.Identifications)
@@ -124,30 +132,24 @@ namespace Leadway_RSA_API.Data
 
         private void UpdateAuditFields()
         {
-            // 1. Get all entries that are currently being tracked by the DbContext
             var entries = ChangeTracker
                 .Entries()
-                .Where(e => e.Entity is Applicant && ( // Filter to only process 'Applicant' entities
-                    e.State == EntityState.Added ||
-                    e.State == EntityState.Modified));
+                .Where(e => e.Entity is IAuditable && // Now we check for the interface
+                            (e.State == EntityState.Added ||
+                             e.State == EntityState.Modified));
 
-            // 2. Loop through each relevant entity
             foreach (var entityEntry in entries)
             {
-                // 3. If the entity is being added for the first time
+                // Cast the entity to the IAuditable interface
+                var auditableEntity = (IAuditable)entityEntry.Entity;
+
                 if (entityEntry.State == EntityState.Added)
                 {
-                    // Set CreatedDate to current UTC time
-                    ((Applicant)entityEntry.Entity).CreatedDate = DateTime.UtcNow;
+                    auditableEntity.CreatedDate = DateTime.UtcNow;
                 }
 
-                // 4. In both Added and Modified cases, update LastModifiedDate
-                ((Applicant)entityEntry.Entity).LastModifiedDate = DateTime.UtcNow;
+                auditableEntity.LastModifiedDate = DateTime.UtcNow;
             }
-
         }
-
-
-
     }
 }
