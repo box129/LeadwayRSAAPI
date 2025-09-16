@@ -15,13 +15,18 @@ namespace Leadway_RSA_API.Data
         public DbSet<Applicant> Applicants { get; set; }
         public DbSet<PersonalDetails> PersonalDetails { get; set; }
         public DbSet<Identification> Identifications { get; set; }
-
         public DbSet<Beneficiary> Beneficiaries { get; set; }
         public DbSet<Executor> Executors { get; set; }
         public DbSet<Guardian> Guardians { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<BeneficiaryAssetAllocation> BeneficiaryAssetAllocations { get; set; }
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+
+        // ADDED: DbSet for the RefreshToken entity
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+        // ADDED: DbSet for the RegistrationKey entity
+        public DbSet<RegistrationKey> RegistrationKeys { get; set; }
 
         // Using Fluent API to configure relationships, constraints, and default values
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -102,7 +107,18 @@ namespace Leadway_RSA_API.Data
                 .HasForeignKey(baa => baa.ApplicantId)
                 .OnDelete(DeleteBehavior.Restrict); // Prevent cascading delete of Applicant if allocations exist
 
+            // ADDED: Configuration for the RegistrationKey entity
+            modelBuilder.Entity<RegistrationKey>()
+                .HasKey(k => k.Id);
 
+            modelBuilder.Entity<RegistrationKey>()
+                .HasIndex(k => k.Key) // Ensure the key itself is unique.
+                .IsUnique();
+
+            modelBuilder.Entity<RegistrationKey>()
+                .HasOne(k => k.Applicant) // A registration key belongs to one applicant.
+                .WithOne(a => a.RegistrationKey) // An applicant has one registration key at a time.
+                .HasForeignKey<RegistrationKey>(k => k.ApplicantId);
         }
 
         // Optional: Override SaveChanges to automatically update LastModifiedDate

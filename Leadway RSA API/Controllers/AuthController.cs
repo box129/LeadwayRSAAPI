@@ -1,5 +1,6 @@
 ﻿using Leadway_RSA_API.Data;
 using Leadway_RSA_API.DTOs;
+using Leadway_RSA_API.Models;
 using Leadway_RSA_API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,87 +12,63 @@ using System.Text;
 namespace Leadway_RSA_API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/admin/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _config;
-        private readonly ApplicationDbContext _context;
 
-        public AuthController(IConfiguration config, ApplicationDbContext context)
+        // Hardcoded credentials for a single admin user.
+        // WARNING: In a production environment, these should be stored in a secure
+        // configuration provider or environment variables, NOT hardcoded.
+        private const string AdminEmail = "admin";
+        private const string AdminPassword = "password123"; // This should be a strong, hashed password
+
+
+        public AuthController(IConfiguration config)
         {
             _config = config;
-            _context = context;
         }
 
+        /// <summary>
+        /// Authenticates a single hardcoded administrator and returns a JWT with an 'Admin' role.
+        /// </summary>
         [HttpPost("login")]
-        public async IActionResult Login([FromBody] CreateLoginDto loginDto)
+        public IActionResult AdminLogin([FromBody] AdminLoginDto loginDto)
         {
-            // You will replace this with your actual user validation logic.
-            // This is just a placeholder example. You would typically query
-            // a database for a user with the matching email and password.
-            // DO NOT store passwords in plain text! Use a hashing algorithm like BCrypt.
-            bool isValidUser = await IsValidUserAsync(loginDto.Email, loginDto.Password);
-            if (!isValidUser)
+            // 1. Validate the hardcoded credentials.
+            // In a real app, the password would be hashed and compared securely.
+            if (loginDto.EmailAddress != AdminEmail || loginDto.Password != AdminPassword)
             {
-                return Unauthorized("Invalid credentials."); // Return 401 Unauthorized if login fails
+                return Unauthorized("Invalid credentials.");
             }
 
-            // If the user is valid, generate a token.
-            var tokenString = GenerateJwtToken(loginDto.Email);
-
-            // Return the token in a new DTO
-            return Ok(new { token = tokenString });
-        }
-
-        private async Task<bool> IsValidUserAsync(string email, string password)
-        {
-            // 1. Find the applicant by their email
-            // We use AsNoTracking() because we're only reading data, not updating it.
-            var applicant = await _context.Applicants
-                                          .AsNoTracking()
-                                          .FirstOrDefaultAsync(a => a.EmailAddress == email);
-
-            if (applicant == null)
-            {
-                // Applicant not found
-                return false;
-            }
-
-            // 2. Validate the password
-            // IMPORTANT: For a real-world app, you MUST use password hashing.
-            // This example assumes a plain-text password for demonstration.
-            // A secure implementation would use a library like BCrypt.NET.
-            return true;
-        }
-
-        private string GenerateJwtToken(string email)
-        {
-            // Get the JWT configuration from appsettings.json
-            var jwtIssuer = _config["Jwt:Issuer"];
-            var jwtAudience = _config["Jwt:Audience"];
-            var jwtKey = _config["Jwt:Key"];
-
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            // Add claims to the token (e.g., user's email, roles, etc.)
+            // 2. Create the JWT with an 'Admin' role claim.
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                // You can add more claims here, like user roles
-                new Claim(ClaimTypes.Role, "Admin"),
-                new Claim(ClaimTypes.Role, "Applicant")
+            new Claim(ClaimTypes.Name, AdminEmail),
+            new Claim(ClaimTypes.Role, "Admin") // The crucial claim for role-based authorization
+        };
+            var jwtToken = GenerateJwtToken(claims);
+
+            // 3. Return the JWT.
+            return Ok(new { jwtToken });
+        }
+
+
+        private string GenerateJwtToken(IEnumerable<Claim> claims)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(1),
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtIssuer,
-                audience: jwtAudience,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30), // Token will expire in 30 minutes
-                signingCredentials: credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
     }
 }

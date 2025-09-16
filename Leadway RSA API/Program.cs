@@ -1,10 +1,12 @@
+using Leadway_RSA_API.Authorization;
 using Leadway_RSA_API.Data;
 using Leadway_RSA_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,37 +22,32 @@ builder.Services.AddControllers()
         // options.JsonSerializerOptions.WriteIndented = true; // For pretty-printed JSON in development
     });
 
-// --- START: JWT AUTHENTICATION CONFIGURATION ---
-// 1. Get the JWT configuration from appsettings.json
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["Jwt:Audience"];
-var jwtSecretKey = builder.Configuration["Jwt:Key"];
-
-if (string.IsNullOrEmpty(jwtSecretKey))
-{
-    throw new InvalidOperationException("JWT Key not found in configuration.");
-}
-var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey));
-
-// 2. Add authentication and JWT Bearer middleware
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// 1. Add Authentication Services
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = key
-    };
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
+
+// 2. Add Authorization Services
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanManageOwnDataOrIsAdmin", policy =>
+        policy.Requirements.Add(new SameApplicantOrAdminRequirement()));
 });
+
+// Register the custom authorization handler
+builder.Services.AddSingleton<IAuthorizationHandler, SameApplicantOrAdminHandler>();
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -58,13 +55,17 @@ builder.Services.AddSwaggerGen();
 
 // --- Add your new services here ---
 builder.Services.AddScoped<IApplicantService, ApplicantService>();
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
+builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<IPersonalDetailsService, PersonalDetailsService>();
 builder.Services.AddScoped<IIdentificationService, IdentificationService>();
 builder.Services.AddScoped<IBeneficiaryService, BeneficiaryService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IAssetAllocationService, AssetAllocationService>();
 builder.Services.AddScoped<IExecutorService, ExecutorService>();
 builder.Services.AddScoped<IGuardianService, GuardianService>();
-builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
+
 // ------------------------------------
 
 // Configure the DbContext with PostgresSQL Server
@@ -82,6 +83,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+// 3. Add Authentication and Authorization Middleware
 
 app.UseAuthentication();
 

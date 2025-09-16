@@ -3,6 +3,7 @@ using System;
 using Leadway_RSA_API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Leadway_RSA_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250915093502_FinalSchemaUpdate")]
+    partial class FinalSchemaUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,6 +52,10 @@ namespace Leadway_RSA_API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("HashedPassword")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsComplete")
                         .HasColumnType("boolean");
 
@@ -66,6 +73,10 @@ namespace Leadway_RSA_API.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("RSAPin")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -371,7 +382,7 @@ namespace Leadway_RSA_API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("Amount")
+                    b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("ApplicantId")
@@ -381,6 +392,7 @@ namespace Leadway_RSA_API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Currency")
+                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -400,6 +412,7 @@ namespace Leadway_RSA_API.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -507,11 +520,8 @@ namespace Leadway_RSA_API.Migrations
                     b.Property<int>("ApplicantId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Key")
                         .IsRequired()

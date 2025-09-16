@@ -8,7 +8,7 @@ namespace Leadway_RSA_API.Services
         Task<PersonalDetails?> GetPersonalDetailsByApplicantIdAsync(int applicantId);
         Task<PersonalDetails?> CreatePersonalDetailsAsync(int applicantId, CreatePersonalDetailsDto detailsDto);
         Task<PersonalDetails?> UpdatePersonalDetailsAsync(int applicantId, UpdatePersonalDetailsDto detailsDto);
-        Task<bool> UploadPassportPhotoAsync(int applicantId, IFormFile file);
-        Task<bool> UploadSignatureAsync(int applicantId, IFormFile file);
+        Task<bool> UploadOrUpdatePassportPhotoAsync(int applicantId, IFormFile file);
+        Task<bool> UploadOrUpdateSignatureAsync(int applicantId, IFormFile file);
     }
 }

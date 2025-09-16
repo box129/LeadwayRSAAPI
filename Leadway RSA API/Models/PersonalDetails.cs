@@ -14,8 +14,8 @@ namespace Leadway_RSA_API.Models
         public string City { get; set; }
 
         // Paths to files saved locally
-        public string PassportPhotoPath { get; set; }
-        public string SignaturePath { get; set; }
+        public string? PassportPhotoPath { get; set; }
+        public string? SignaturePath { get; set; }
 
         public DateTime CreatedDate { get; set; }
         public DateTime LastModifiedDate { get; set; }

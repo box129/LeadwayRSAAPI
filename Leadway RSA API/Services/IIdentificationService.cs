@@ -7,10 +7,11 @@ namespace Leadway_RSA_API.Services
 {
     public interface IIdentificationService
     {
-        Task<Identification?> AddIdentificationAsync(int applicantId, CreateIdentificationDto identificationDto);
+        Task<Identification?> AddIdentificationAsync(int applicantId, CreateIdentificationDto identificationDto, IFormFile file);
         Task<List<Identification>> GetIdentificationsByApplicantIdAsync(int applicantId);
         Task<Identification?> GetIdentificationAsync(int id);
+        Task<Identification?> UpdateIdentificationAsync(int applicantId, int id, UpdateIdentificationDto identificationDto, IFormFile? file);
         Task<Identification?> UpdateIdentificationAsync(int applicantId, int id, UpdateIdentificationDto identificationDto);
-        Task<bool> DeleteIdentificationAsync(int applicantId, int id);
+        Task<bool> DeleteIdentificationAsync(int id, int applicantId);
     }
 }

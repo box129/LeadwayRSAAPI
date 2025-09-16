@@ -77,6 +77,11 @@ namespace Leadway_RSA_API.Services
             return await _context.Applicants.FindAsync(id);
         }
 
+        public async Task<List<Applicant>> GetAllApplicantsAsync()
+        {
+            return await _context.Applicants.ToListAsync();
+        }
+
         /// <summary>
         /// Updates an existing Applicant record.
         /// The service finds the model and applies updates from the DTO.
@@ -169,6 +174,12 @@ namespace Leadway_RSA_API.Services
         private bool ApplicantExists(int id)
         {
             return _context.Applicants.Any(e => e.Id == id);
+        }
+
+
+        public async Task<Applicant?> FindApplicantByEmailAsync(string email)
+        {
+            return await _context.Applicants.FirstOrDefaultAsync(a => a.EmailAddress == email);
         }
     }
 }

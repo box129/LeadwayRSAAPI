@@ -5,10 +5,10 @@
         public int Id { get; set; } // Primary Key
 
         public string? RSAPin { get; set; } // Optional: RSA Pin, can be null if not provided or required
-        public required string FirstName { get; set; }
-        public required string LastName { get; set; }
-        public required string PhoneNumber { get; set; }
-        public required string EmailAddress { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string EmailAddress { get; set; }
 
         public DateTime DateOfBirth { get; set; }
 
@@ -33,5 +33,8 @@
         // it's useful to have a direct link from the Applicant for querying all allocations related to this specific will.
         public virtual ICollection<PaymentTransaction>? PaymentTransactions { get; set; } = new List<PaymentTransaction>();
         // An Applicant can have multiple PaymentTransactions (e.g., retries for failed payments).
+
+        // ADDED: Navigation property for the RegistrationKey
+        public virtual RegistrationKey? RegistrationKey { get; set; }
     }
 }

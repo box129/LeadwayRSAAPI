@@ -2,6 +2,7 @@
 using Leadway_RSA_API.DTOs;
 using Leadway_RSA_API.Models;
 using Leadway_RSA_API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -16,9 +17,10 @@ using System.Transactions;
 namespace Leadway_RSA_API.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     // /api/applicants
-    public class ApplicantsController : ControllerBase
+    public class AdminController : ControllerBase
     {
         private readonly IApplicantService _applicantService;
         private readonly IPersonalDetailsService _personalDetailsService;
@@ -29,10 +31,11 @@ namespace Leadway_RSA_API.Controllers
         private readonly IExecutorService _executorService;
         private readonly IGuardianService _guardianService;
         private readonly IPaymentTransactionService _paymentTransactionService;
+
         // You might keep the DbContext here if other methods you haven't refactored yet still need it.
         //private readonly ApplicationDbContext _context;
 
-        public ApplicantsController(IApplicantService applicantService, IPersonalDetailsService personalDetailsService,IIdentificationService identificationService, IBeneficiaryService beneficiaryService, IAssetService assetService, IAssetAllocationService assetAllocationService, IExecutorService executorService, IGuardianService guardianService, IPaymentTransactionService paymentTransactionService)
+        public AdminController(IApplicantService applicantService, IPersonalDetailsService personalDetailsService, IIdentificationService identificationService, IBeneficiaryService beneficiaryService, IAssetService assetService, IAssetAllocationService assetAllocationService, IExecutorService executorService, IGuardianService guardianService, IPaymentTransactionService paymentTransactionService)
         {
             // _context = context;
             _applicantService = applicantService;
@@ -44,47 +47,6 @@ namespace Leadway_RSA_API.Controllers
             _executorService = executorService;
             _guardianService = guardianService;
             _paymentTransactionService = paymentTransactionService;
-        }
-
-        /// <summary>
-        /// Creates a new Applicant record (Initial step for personal details).
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> CreateApplicant([FromBody] CreateApplicantDto applicantDto)
-        {
-            // Controller's job: Check validation.
-            // --- Server-Side Validation (based on Data Annotation in your model) ---
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Correct: Pass the DTO to the service. The service is now responsible for the mapping.
-            // This is a cleaner approach as the service owns the business logic for creating the model.
-            var newApplicant = await _applicantService.CreateApplicantAsync(applicantDto);
-
-            // Controller's job: Handle the service's result and return the appropriate response.
-            if (newApplicant == null)
-            {
-                ModelState.AddModelError("EmailAddress", "An applicant with this email address already exists.");
-                return Conflict(ModelState); // HTTP 409 Conflict
-            }
-            // Correct: Map the full model from the service back to a DTO for the response.
-            var applicantDtoResponse = new ApplicantDto
-            {
-                Id = newApplicant.Id,
-                RSAPin = newApplicant.RSAPin,
-                FirstName = newApplicant.FirstName,
-                LastName = newApplicant.LastName,
-                PhoneNumber = newApplicant.PhoneNumber,
-                EmailAddress = newApplicant.EmailAddress,
-                DateOfBirth = newApplicant.DateOfBirth,
-                CurrentStep = newApplicant.CurrentStep,
-                IsComplete = newApplicant.IsComplete
-            };
-
-            // The 'CreatedAtAction' method automatically sets the Location header
-            return CreatedAtAction(nameof(GetApplicant), new { id = applicantDtoResponse.Id }, applicantDtoResponse);
         }
 
         /// <summary>
@@ -117,6 +79,34 @@ namespace Leadway_RSA_API.Controllers
             };
 
             return Ok(applicantDto); // HTTP 200 OK with the applicant data
+        }
+
+
+
+        /// <summary>
+        /// Retrieves a list of all Applicant records.
+        /// </summary>
+        [HttpGet("applicants")]
+        public async Task<IActionResult> GetApplicants()
+        {
+            // Delegate the list retrieval to the service.
+            var applicants = await _applicantService.GetAllApplicantsAsync();
+
+            // Map the full models to a list of DTOs for the response.
+            var applicantDtos = applicants.Select(a => new ApplicantDto
+            {
+                Id = a.Id,
+                RSAPin = a.RSAPin,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                PhoneNumber = a.PhoneNumber,
+                EmailAddress = a.EmailAddress,
+                DateOfBirth = a.DateOfBirth,
+                CurrentStep = a.CurrentStep,
+                IsComplete = a.IsComplete
+            }).ToList();
+
+            return Ok(applicantDtos); // HTTP 200 OK with the list of applicants
         }
 
         /// <summary>
@@ -162,36 +152,8 @@ namespace Leadway_RSA_API.Controllers
             return NoContent();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreatePersonalDetails(int applicantId, [FromBody] CreatePersonalDetailsDto detailsDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
 
-            var newDetails = await _personalDetailsService.CreatePersonalDetailsAsync(applicantId, detailsDto);
-            if (newDetails == null)
-            {
-                return BadRequest("Personal details for this applicant already exist.");
-            }
-
-            var personalDetailsDto = new PersonalDetailsDto
-            {
-                Id = newDetails.Id,
-                ApplicantId = newDetails.ApplicantId,
-                PlaceOfBirth = newDetails.PlaceOfBirth,
-                Religion = newDetails.Religion,
-                Gender = newDetails.Gender,
-                HomeAddress = newDetails.HomeAddress,
-                State = newDetails.State,
-                City = newDetails.City
-            };
-
-            return CreatedAtAction(nameof(GetPersonalDetails), new { applicantId = personalDetailsDto.ApplicantId }, personalDetailsDto);
-        }
-
-        [HttpGet]
+        [HttpGet("{applicantId}/personal-details")]
         public async Task<IActionResult> GetPersonalDetails(int applicantId)
         {
             var personalDetails = await _personalDetailsService.GetPersonalDetailsByApplicantIdAsync(applicantId);
@@ -217,7 +179,9 @@ namespace Leadway_RSA_API.Controllers
             return Ok(personalDetailsDto);
         }
 
-        [HttpPut]
+
+
+        [HttpPut("{applicantId}/personal-details")]
         public async Task<IActionResult> UpdatePersonalDetails(int applicantId, [FromBody] UpdatePersonalDetailsDto detailsDto)
         {
             if (!ModelState.IsValid)
@@ -234,78 +198,12 @@ namespace Leadway_RSA_API.Controllers
             return NoContent();
         }
 
-        [HttpPost("passport-photo")]
-        public async Task<IActionResult> UploadPassportPhoto(int applicantId, IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("File is empty or not provided.");
-            }
-            var result = await _personalDetailsService.UploadPassportPhotoAsync(applicantId, file);
-            if (!result)
-            {
-                return NotFound("Personal details not found for this applicant.");
-            }
-
-            return Ok("Passport photo uploaded successfully.");
-        }
-
-        [HttpPost("signature")]
-        public async Task<IActionResult> UploadSignature(int applicantId, IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("File is empty or not provided.");
-            }
-
-            var result = await _personalDetailsService.UploadSignatureAsync(applicantId, file);
-            if (!result)
-            {
-                return NotFound("Personal details not found for this applicant.");
-            }
-
-            return Ok("Signature uploaded successfully.");
-        }
-
-        /// <summary>
-        /// Adds a new Identification record for a specific Applicant.
-        /// </summary>
-        [HttpPost("{applicantId}/identifications")] // e.g., POST /api/applicants/1/identifications
-        public async Task<IActionResult> AddIdentification(int applicantId, [FromBody] CreateIdentificationDto identificationDto)
-        {
-            // 1. Validate incoming data using model state
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState); // Returns 400 with validation errors
-            }
-
-            // Sends request to the identification service to add the identification
-            var addedIdentification = await _identificationService.AddIdentificationAsync(applicantId, identificationDto);
-            if (addedIdentification == null)
-            {
-                return NotFound($"Applicant with ID {applicantId} not found.");
-            }
-
-            // Map the added model back to the DTO for the response
-            var addedIdentificationDto = new IdentificationDto
-            {
-                Id = addedIdentification.Id,
-                ApplicantId = addedIdentification.ApplicantId,
-                IdentificationType = addedIdentification.IdentificationType.ToString(),
-                DocumentNumber = addedIdentification.DocumentNumber,
-                ImagePath = addedIdentification.ImagePath,
-                UploadDate = addedIdentification.UploadDate
-            };
-
-            // 4. Return success response (201 Created)
-            // Use nameof(GetIdentification) to point to the action that retrieves a single identification by its own ID.
-            return CreatedAtAction(nameof(GetIdentification), new { id = addedIdentificationDto.Id }, addedIdentificationDto);
-        }
+        // --- Identification Endpoints ---
 
         /// <summary>
         /// Retrieves all Identification records for a specific Applicant.
         /// </summary>
-        [HttpGet("{applicantId}/identifications")] // e.g., GET /api/applicants/1/identifications
+        [HttpGet("{applicantId}/identifications")]
         public async Task<IActionResult> GetIdentificationsForApplicant(int applicantId)
         {
             var identifications = await _identificationService.GetIdentificationsByApplicantIdAsync(applicantId);
@@ -331,7 +229,7 @@ namespace Leadway_RSA_API.Controllers
         /// <summary>
         /// Retrieves a single Identification record by its own Id.
         /// </summary>
-        [HttpGet("identifications/{id}")] // e.g., GET /api/applicants/identifications/1
+        [HttpGet("identifications/{id}")]
         public async Task<IActionResult> GetIdentification(int id)
         {
             var identification = await _identificationService.GetIdentificationAsync(id);
@@ -339,6 +237,7 @@ namespace Leadway_RSA_API.Controllers
             {
                 return NotFound($"Identification with ID {id} not found.");
             }
+
             // Map the full model to the DTO for the response
             var identificationDto = new IdentificationDto
             {
@@ -356,19 +255,22 @@ namespace Leadway_RSA_API.Controllers
         /// <summary>
         /// Updates an existing Identification record for a specific Applicant.
         /// </summary>
-        [HttpPut("{applicantId}/identifications/{id}")] // e,g., PUT api/applicants/1/identifications/1
+        [HttpPut("{applicantId}/identifications/{id}")]
         public async Task<IActionResult> UpdateIdentification(int applicantId, int id, [FromBody] UpdateIdentificationDto identificationDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
             // The service layer should handle finding the entity and applying the updates
+            // It will use the overloaded method that doesn't require a file.
             var updatedIdentification = await _identificationService.UpdateIdentificationAsync(applicantId, id, identificationDto);
             if (updatedIdentification == null)
             {
                 return NotFound($"Identification with ID {id} not found or does not belong to Applicant ID {applicantId}.");
             }
+
             // Return a 204 No Content for a successful update
             return NoContent();
         }
@@ -376,7 +278,7 @@ namespace Leadway_RSA_API.Controllers
         /// <summary>
         /// Deletes an Identification record for a specific Applicant.
         /// </summary>
-        [HttpDelete("{applicantId}/identifications/{id}")] // e.g., DELETE /api/applicants/1/identifications/1
+        [HttpDelete("{applicantId}/identifications/{id}")]
         public async Task<IActionResult> DeleteIdentification(int applicantId, int id)
         {
             var isDeleted = await _identificationService.DeleteIdentificationAsync(applicantId, id);
@@ -384,6 +286,7 @@ namespace Leadway_RSA_API.Controllers
             {
                 return NotFound($"Identification with ID {id} not found or does not belong to Applicant ID {applicantId}.");
             }
+
             return NoContent();
         }
 
@@ -504,41 +407,6 @@ namespace Leadway_RSA_API.Controllers
 
             // 3. Return 204 No Content for successful deletion.
             return NoContent();
-        }
-
-        /// <summary>
-        /// Adds a new Asset record for a specific Applicant.
-        /// </summary>
-        [HttpPost("{applicantId}/assets")] // POST /api/applicants/1/assets
-        public async Task<IActionResult> AddAsset(int applicantId, [FromBody] CreateAssetDto assetDto)
-        {
-            // 1. Valdate incoming data using madel state
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState); // Returns 400 with validation errors
-            }
-
-            var addedAsset = await _assetService.AddAssetAsync(applicantId, assetDto);
-            // NOTE: This check has been added to handle the case where the applicantId doesn't exist.
-            if (addedAsset == null)
-            {
-                return NotFound($"Applicant with ID {applicantId} not found.");
-            }
-
-            var addedAssetDto = new AssetDto
-            {
-                Id = addedAsset.Id,
-                ApplicantId = addedAsset.ApplicantId,
-                Name = addedAsset.Name,
-                RSAPin = addedAsset.RSAPin,
-                PFA = addedAsset.PFA,
-                SalaryBankName = addedAsset.SalaryBankName,
-                SalaryAccountNumber = addedAsset.SalaryAccountNumber,
-            };
-
-            // 4. Return success response (201 Created)
-            // Use nameof(GetAsset) to point to the action that retrieves a single asset by its own ID.
-            return CreatedAtAction(nameof(GetAsset), new { id = addedAssetDto.Id }, addedAssetDto);
         }
 
         /// <summary>
@@ -776,45 +644,6 @@ namespace Leadway_RSA_API.Controllers
         }
 
         /// <summary>
-        /// Adds a new Executor record for a specific Applicant.
-        /// </summary>
-        [HttpPost("{applicantId}/executors")]
-        public async Task<IActionResult> AddExecutor(int applicantId, [FromBody] CreateExecutorsDtos executorDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState); // Returns 400 with validation errors
-            }
-
-            var addedExecutor = await _executorService.AddExecutorAsync(applicantId, executorDto);
-            if (addedExecutor == null)
-            {
-                return NotFound($"Applicant with ID {applicantId} not found.");
-            }
-
-            var addedExecutorDto = new ExecutorsDtos
-            {
-                Id = addedExecutor.Id,
-                ApplicantId = addedExecutor.ApplicantId,
-                IsDefault = addedExecutor.IsDefault, // Map the new property
-                // Map either the Name or the ExecutorType based on IsDefault
-                Name = addedExecutor.IsDefault ? addedExecutor.Name : null,
-                ExecutorType = addedExecutor.IsDefault ? null : addedExecutor.ExecutorType.ToString(),
-                FirstName = addedExecutor.FirstName,
-                LastName = addedExecutor.LastName,
-                CompanyName = addedExecutor.CompanyName,
-                PhoneNumber = addedExecutor.PhoneNumber,
-                Address = addedExecutor.Address,
-                City = addedExecutor.City,
-                State = addedExecutor.State
-            };
-
-            // 4. Return success response (201 Created)
-            // Use nameof(GetExecutor) to point to the action that retrieves a single executor by its own ID.
-            return CreatedAtAction(nameof(GetExecutor), new { Id = addedExecutorDto.Id }, addedExecutorDto);
-        }
-
-        /// <summary>
         /// Retrieves all Executor records for a specific Applicant.
         /// </summary>
         [HttpGet("{applicantId}/executors")] // e.g., GET /api/applicants/1/executors
@@ -913,42 +742,6 @@ namespace Leadway_RSA_API.Controllers
 
 
         /// <summary>
-        /// Adds a new Guardian record for a specific Applicant.
-        /// </summary>
-        [HttpPost("{applicantId}/guardians")] // e.g., POST api/applicants/1/guardians
-        public async Task<IActionResult> AddGuardian(int applicantId, [FromBody] CreateGuardiansDtos guardianDto)
-        {
-            // 1. Validate incoming data using model state
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var addedGuardian = await _guardianService.AddGuardianAsync(applicantId, guardianDto);
-            if (addedGuardian == null)
-            {
-                return NotFound($"Applicant with ID {applicantId} not found.");
-            }
-
-            var addedGuardianDto = new GuardiansDtos()
-            {
-                Id = addedGuardian.Id,
-                ApplicantId = addedGuardian.ApplicantId,
-                FirstName = addedGuardian.FirstName,
-                LastName = addedGuardian.LastName,
-                PhoneNumber = addedGuardian.PhoneNumber,
-                Relationship = guardianDto.Relationship,
-                Address = addedGuardian.Address,
-                City = addedGuardian.City,
-                State = addedGuardian.State
-            };
-
-            // 4. Return success response (201 Created)
-            // Use nameof(GetGuardian) to point to the action that retrieves a single guardian by its own ID.
-            return CreatedAtAction(nameof(GetGuardian), new { Id = addedGuardianDto.Id }, addedGuardianDto);
-        }
-
-        /// <summary>
         /// Retrieves all Guardian records for a specific Applicant.
         /// </summary>
         [HttpGet("{applicantId}/guardians")] // e.g., GET /api/applicants/1/guardians
@@ -1040,39 +833,6 @@ namespace Leadway_RSA_API.Controllers
             }
 
             return NoContent();
-        }
-
-        /// <summary>
-        /// Adds a new PaymentTransaction record for a specific Applicant.
-        /// </summary>
-        [HttpPost("{applicantId}/paymenttransactions")]
-        public async Task<IActionResult> AddPaymentTransaction(int applicantId, [FromBody] CreatePaymentTransactionDto paymentTransactionDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var addedTransaction = await _paymentTransactionService.AddPaymentTransactionAsync(applicantId, paymentTransactionDto);
-            if (addedTransaction == null)
-            {
-                return NotFound($"Applicant with ID {applicantId} not found.");
-            }
-
-            var addedTransactionDto = new PaymentTransactionDto
-            {
-                Id = addedTransaction.Id,
-                ApplicantId = addedTransaction.ApplicantId,
-                Amount = addedTransaction.Amount,
-                Currency = addedTransaction.Currency,
-                Status = addedTransaction.Status,
-                GatewayReferenceId = addedTransaction.GatewayReferenceId,
-                PaymentMethod = addedTransaction.PaymentMethod,
-                TransactionDate = addedTransaction.TransactionDate,
-                Message = addedTransaction.Message
-            };
-
-            return CreatedAtAction(nameof(GetPaymentTransaction), new { id = addedTransactionDto.Id }, addedTransactionDto);
         }
 
         /// <summary>

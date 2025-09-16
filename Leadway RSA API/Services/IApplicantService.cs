@@ -10,7 +10,10 @@ namespace Leadway_RSA_API.Services
     {
         Task<Applicant?> CreateApplicantAsync(CreateApplicantDto applicantDto);
         Task<Applicant?> GetApplicantAsync(int id);
+        Task<List<Applicant>> GetAllApplicantsAsync();
         Task<Applicant?> UpdateApplicantAsync(int id, UpdateApplicantDto applicantDto);
         Task<bool> DeleteApplicantAsync(int id);
+
+        Task<Applicant?> FindApplicantByEmailAsync(string email);
     }
 }

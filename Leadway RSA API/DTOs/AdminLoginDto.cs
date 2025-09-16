@@ -2,11 +2,10 @@
 
 namespace Leadway_RSA_API.DTOs
 {
-    public class CreateLoginDto
+    public class AdminLoginDto
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        public string EmailAddress { get; set; }
 
         [Required]
         public string Password { get; set; }

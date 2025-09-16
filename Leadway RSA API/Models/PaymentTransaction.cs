@@ -12,17 +12,14 @@ namespace Leadway_RSA_API.Models
         public int ApplicantId { get; set; } // Foreign Key referencing the Applicant table's Id.
 
         // --- Payment Details ---
-        [Required]
         [Column(TypeName = "decimal(18, 2)")] // Explicitly define decimal precision and scale for currency
-        public decimal Amount { get; set; } // The amount of the transaction (e.g., 40000.00)
+        public decimal? Amount { get; set; } // The amount of the transaction (e.g., 40000.00)
 
-        [Required]
         [StringLength(10)] // e.g., "NGN", "USD"
-        public string Currency { get; set; } = "NGN"; // Default to Nigerian Naira
+        public string? Currency { get; set; } = "NGN"; // Default to Nigerian Naira
 
-        [Required]
         [StringLength(50)] // "Pending", "Success", "Failed", "Cancelled"
-        public required string Status { get; set; } // Current status of the payment transaction
+        public string? Status { get; set; } // Current status of the payment transaction
 
         [StringLength(255)] // Unique ID provided by the payment gateway
         public string? GatewayReferenceId { get; set; } // Nullable initially, populated after gateway response

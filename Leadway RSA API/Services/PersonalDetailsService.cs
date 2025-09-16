@@ -13,7 +13,7 @@ namespace Leadway_RSA_API.Services
         public PersonalDetailsService(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
-            _env = env; // Used for file path management
+            _env = env;
         }
 
         public async Task<PersonalDetails?> GetPersonalDetailsByApplicantIdAsync(int applicantId)
@@ -27,8 +27,6 @@ namespace Leadway_RSA_API.Services
             var existingDetails = await _context.PersonalDetails.AnyAsync(pd => pd.ApplicantId == applicantId);
             if (existingDetails)
             {
-                // You may want to return an error or null if the details already exist.
-                // This prevents creating duplicate records.
                 return null;
             }
 
@@ -40,7 +38,9 @@ namespace Leadway_RSA_API.Services
                 Gender = detailsDto.Gender,
                 HomeAddress = detailsDto.HomeAddress,
                 State = detailsDto.State,
-                City = detailsDto.City
+                City = detailsDto.City,
+                PassportPhotoPath = null, // Ensure these are null initially
+                SignaturePath = null
             };
 
             _context.PersonalDetails.Add(personalDetails);
@@ -67,36 +67,81 @@ namespace Leadway_RSA_API.Services
             return personalDetails;
         }
 
-        public async Task<bool> UploadPassportPhotoAsync(int applicantId, IFormFile file)
+        /// <summary>
+        /// Uploads a passport photo for the first time or updates an existing one.
+        /// </summary>
+        public async Task<bool> UploadOrUpdatePassportPhotoAsync(int applicantId, IFormFile file)
         {
             var personalDetails = await GetPersonalDetailsByApplicantIdAsync(applicantId);
-            if (personalDetails == null) return false;
+            if (personalDetails == null)
+            {
+                // No personal details found to attach the photo to.
+                return false;
+            }
 
-            // Generate a unique file name to avoid collisions
+            // Check if an existing photo needs to be deleted.
+            // This is the core of the "update" logic.
+            if (!string.IsNullOrEmpty(personalDetails.PassportPhotoPath))
+            {
+                // Delete the old file if it exists.
+                if (System.IO.File.Exists(personalDetails.PassportPhotoPath))
+                {
+                    System.IO.File.Delete(personalDetails.PassportPhotoPath);
+                }
+            }
+
+            // Now, save the new file. The SavePassportPhoto method handles the file I/O and database update.
+            return await SavePassportPhoto(personalDetails, file);
+        }
+
+        /// <summary>
+        /// Uploads a signature for the first time or updates an existing one.
+        /// </summary>
+        public async Task<bool> UploadOrUpdateSignatureAsync(int applicantId, IFormFile file)
+        {
+            var personalDetails = await GetPersonalDetailsByApplicantIdAsync(applicantId);
+            if (personalDetails == null)
+            {
+                // No personal details found to attach the signature to.
+                return false;
+            }
+
+            // Check if an existing signature needs to be deleted.
+            if (!string.IsNullOrEmpty(personalDetails.SignaturePath))
+            {
+                // Delete the old file if it exists.
+                if (System.IO.File.Exists(personalDetails.SignaturePath))
+                {
+                    System.IO.File.Delete(personalDetails.SignaturePath);
+                }
+            }
+
+            // Now, save the new file. The SaveSignature method handles the file I/O and database update.
+            return await SaveSignature(personalDetails, file);
+        }
+
+        // --- Private Helper Methods ---
+
+        private async Task<bool> SavePassportPhoto(PersonalDetails personalDetails, IFormFile file)
+        {
             var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "passports");
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            // Ensure the directory exists
             Directory.CreateDirectory(uploadsFolder);
 
-            // Save the file to the server
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
             }
 
-            // Update the model with the file path
             personalDetails.PassportPhotoPath = filePath;
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<bool> UploadSignatureAsync(int applicantId, IFormFile file)
+        private async Task<bool> SaveSignature(PersonalDetails personalDetails, IFormFile file)
         {
-            var personalDetails = await GetPersonalDetailsByApplicantIdAsync(applicantId);
-            if (personalDetails == null) return false;
-
             var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "signatures");
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);

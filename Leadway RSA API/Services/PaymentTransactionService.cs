@@ -33,7 +33,7 @@ namespace Leadway_RSA_API.Services
                 Status = paymentTransactionDto.Status,
                 GatewayReferenceId = paymentTransactionDto.GatewayReferenceId,
                 PaymentMethod = paymentTransactionDto.PaymentMethod,
-                Message = paymentTransactionDto.Message,
+                //Message = paymentTransactionDto.Message,
                 TransactionDate = DateTime.UtcNow // Set on the server
             };
 
@@ -69,7 +69,7 @@ namespace Leadway_RSA_API.Services
         public async Task<PaymentTransaction?> UpdatePaymentTransactionAsync(int applicantId, int id, UpdatePaymentTransactionDto paymentTransactionDto)
         {
             var existingPaymentTransaction = await _context.PaymentTransactions
-                                                .FirstOrDefaultAsync(p => p.Id == id && p.ApplicantId == applicantId);
+                                                           .FirstOrDefaultAsync(p => p.Id == id && p.ApplicantId == applicantId);
 
             if (existingPaymentTransaction == null)
             {
@@ -106,10 +106,33 @@ namespace Leadway_RSA_API.Services
             }
         }
 
+        /// <summary>
+        /// Updates a payment transaction's status. This is a dedicated method for simple status updates,
+        /// such as from 'Pending' to 'Success' after a gateway callback or OTP verification.
+        /// </summary>
+        public async Task<PaymentTransaction?> UpdateTransactionStatusAsync(int applicantId, int id, string newStatus, string? gatewayReferenceId = null)
+        {
+            var existingTransaction = await _context.PaymentTransactions
+                                                    .FirstOrDefaultAsync(p => p.Id == id && p.ApplicantId == applicantId);
+
+            if (existingTransaction == null)
+            {
+                return null;
+            }
+
+            existingTransaction.Status = newStatus;
+            existingTransaction.GatewayReferenceId = gatewayReferenceId; // Update reference ID if provided
+            existingTransaction.LastModifiedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return existingTransaction;
+        }
+
         public async Task<bool> DeletePaymentTransactionAsync(int applicantId, int id)
         {
             var paymentTransaction = await _context.PaymentTransactions
-                                            .FirstOrDefaultAsync(p => p.Id == id && p.ApplicantId == applicantId);
+                                                   .FirstOrDefaultAsync(p => p.Id == id && p.ApplicantId == applicantId);
 
             if (paymentTransaction == null)
             {

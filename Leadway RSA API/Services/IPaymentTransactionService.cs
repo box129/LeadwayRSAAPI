@@ -12,5 +12,6 @@ namespace Leadway_RSA_API.Services
         Task<PaymentTransaction?> GetPaymentTransactionAsync(int id);
         Task<PaymentTransaction?> UpdatePaymentTransactionAsync(int applicantId, int id, UpdatePaymentTransactionDto paymentTransactionDto);
         Task<bool> DeletePaymentTransactionAsync(int applicantId, int id);
+        Task<PaymentTransaction?> UpdateTransactionStatusAsync(int applicantId, int id, string newStatus, string? gatewayReferenceId = null);
     }
 }

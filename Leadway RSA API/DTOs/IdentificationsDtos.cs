@@ -8,7 +8,7 @@ namespace Leadway_RSA_API.DTOs
     {
         public int Id { get; set; }
         public int ApplicantId { get; set; }
-        public required string IdentificationType { get; set; }
+        public string IdentificationType { get; set; }
         public string? DocumentNumber { get; set; }
         public string? ImagePath { get; set; }
         public DateTime UploadDate { get; set; }
@@ -20,11 +20,11 @@ namespace Leadway_RSA_API.DTOs
     {
         // DocumentNumber is required on the model, so it should be required here too.
         [Required]
-        public required string DocumentNumber { get; set; }
+        public string DocumentNumber { get; set; }
 
         // These fields from the model should also be included
         [Required]
-        public required string IdentificationType { get; set; }
+        public string IdentificationType { get; set; }
         public string? ImagePath { get; set; }
     }
 
